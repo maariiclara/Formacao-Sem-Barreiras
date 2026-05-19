@@ -1,0 +1,2822 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Histórico - Formação Sem Barreiras</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <!-- jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- html2canvas para converter HTML em imagem -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- VLibras -->
+    <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+    <!-- Ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* Reset e configurações gerais */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            width: 100vw;
+            overflow-x: hidden;
+        }
+
+        /* ===== CABEÇALHO PADRONIZADO ===== */
+        .cabecalho {
+            background: linear-gradient(135deg, #1a3459, #40a4c0);
+            color: white;
+            padding: 1rem 0;
+            width: 100%;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: relative;
+            z-index: 1000;
+        }
+
+        .cabecalho-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            flex-wrap: nowrap;
+        }
+
+        .logo-area {
+            flex: 0 0 auto;
+            min-width: 200px;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+            white-space: nowrap;
+            display: inline-block;
+        }
+
+        .logo:hover {
+            opacity: 0.9;
+        }
+
+        .menu-principal {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            margin: 0 1rem;
+            min-width: 0;
+        }
+
+        .menu-principal ul {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            flex-wrap: nowrap;
+            justify-content: center;
+            gap: 0.5rem;
+            max-width: 100%;
+            overflow: hidden;
+        }
+
+        .menu-principal li {
+            flex: 0 0 auto;
+            margin: 0;
+        }
+
+        .menu-link {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 0.8rem;
+            border-radius: 4px;
+            transition: all 0.3s;
+            font-weight: 500;
+            white-space: nowrap;
+            display: inline-block;
+            font-size: 0.95rem;
+        }
+
+        .menu-link:hover, .menu-link.ativo {
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .user-actions {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            min-width: 180px;
+            justify-content: flex-end;
+        }
+
+        .user-menu {
+            display: none;
+            align-items: center;
+            gap: 0.8rem;
+            flex-wrap: nowrap;
+        }
+
+        .user-info {
+            color: white;
+            font-weight: 500;
+            white-space: nowrap;
+            font-size: 0.9rem;
+        }
+
+        .botao-sair {
+            background-color: #EA4335;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s;
+            white-space: nowrap;
+            font-size: 0.9rem;
+        }
+
+        .botao-sair:hover {
+            background-color: #d33426;
+        }
+
+        .botao-login {
+            background-color: #d1a10f;
+            color: #1a3459;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+            font-size: 0.9rem;
+        }
+
+        .botao-login:hover {
+            background-color: #e0b433;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .icone-login {
+            font-size: 1rem;
+        }
+
+        .admin-item {
+            display: none !important;
+        }
+
+        .admin-item.mostrar {
+            display: list-item !important;
+        }
+
+        .menu-item-logged {
+            display: none;
+        }
+
+        @media (max-width: 1100px) {
+            .menu-link {
+                padding: 0.5rem 0.6rem;
+                font-size: 0.9rem;
+            }
+            
+            .logo {
+                font-size: 1.6rem;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .cabecalho-container {
+                flex-direction: column;
+                gap: 1rem;
+                flex-wrap: wrap;
+            }
+            
+            .menu-principal {
+                margin: 1rem 0;
+                order: 3;
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .menu-principal ul {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 0.3rem;
+            }
+            
+            .logo-area {
+                order: 1;
+                min-width: auto;
+            }
+            
+            .user-actions {
+                order: 2;
+                min-width: auto;
+                justify-content: center;
+            }
+            
+            .menu-link {
+                padding: 0.4rem 0.6rem;
+                font-size: 0.85rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .menu-principal ul {
+                flex-wrap: wrap;
+            }
+            
+            .menu-principal li {
+                margin: 0.2rem;
+            }
+            
+            .menu-link {
+                padding: 0.4rem 0.5rem;
+                font-size: 0.85rem;
+            }
+            
+            .logo {
+                font-size: 1.4rem;
+            }
+            
+            .botao-login, .botao-sair {
+                padding: 0.5rem 0.8rem;
+                font-size: 0.85rem;
+            }
+            
+            .user-info {
+                font-size: 0.85rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .menu-principal ul {
+                justify-content: space-around;
+                gap: 0.2rem;
+            }
+            
+            .menu-link {
+                padding: 0.3rem 0.4rem;
+                font-size: 0.8rem;
+            }
+            
+            .user-info {
+                display: none;
+            }
+            
+            .botao-login span.icone-login {
+                display: none;
+            }
+        }
+
+        /* Conteúdo principal */
+        .cursos-area {
+            padding: 2rem;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .titulo-destaque {
+            display: flex;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding: 0 1rem;
+        }
+
+        .seta-icone {
+            width: 30px;
+            height: 4px;
+            background-color: #40a4c0;
+            margin-right: 10px;
+            position: relative;
+        }
+
+        .seta-icone::after {
+            content: '';
+            position: absolute;
+            right: -8px;
+            top: -4px;
+            width: 0;
+            height: 0;
+            border-left: 8px solid #40a4c0;
+            border-top: 6px solid transparent;
+            border-bottom: 6px solid transparent;
+        }
+
+        .titulo-destaque h2 {
+            color: #1a3459;
+            font-size: 2rem;
+        }
+
+        /* Abas */
+        .abas-container {
+            width: 100%;
+            margin: 0 auto 30px auto;
+            padding: 0 1rem;
+        }
+
+        .abas-navegacao {
+            display: flex;
+            gap: 10px;
+            border-bottom: 2px solid #e0e0e0;
+            overflow-x: auto;
+        }
+
+        .botao-aba {
+            padding: 12px 24px;
+            border: none;
+            background: #f0f4f7;
+            color: #1a3459;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .botao-aba:hover {
+            background: #e0e0e0;
+        }
+
+        .botao-aba.ativo {
+            background-color: #40a4c0;
+            color: white;
+        }
+
+        /* Conteúdo das abas */
+        .conteudo-aba {
+            width: 100%;
+            display: none;
+        }
+
+        .conteudo-aba.ativo {
+            display: block;
+        }
+
+        /* ===== NOVO LAYOUT - CARTÕES ===== */
+        .cartoes-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 20px 0;
+        }
+
+        .cartao {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cartao:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .cartao-cabecalho {
+            background: linear-gradient(135deg, #1a3459, #40a4c0);
+            color: white;
+            padding: 15px 20px;
+            position: relative;
+        }
+
+        .cartao-cabecalho h3 {
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+
+        .cartao-cabecalho .tipo {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .cartao-corpo {
+            padding: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cartao-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .info-item {
+            text-align: center;
+        }
+
+        .info-item .label {
+            display: block;
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .info-item .valor {
+            display: block;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #1a3459;
+        }
+
+        .info-item .data {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .cartao-status {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            align-self: flex-start;
+        }
+
+        .cartao-acoes {
+            display: flex;
+            gap: 10px;
+            margin-top: auto;
+            flex-wrap: wrap;
+        }
+
+        .acao-btn {
+            flex: 1;
+            min-width: 120px;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .acao-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .btn-detalhes {
+            background-color: #4285F4;
+            color: white;
+        }
+
+        .btn-detalhes:hover {
+            background-color: #3367d6;
+        }
+
+        .btn-certificado {
+            background-color: #34A853;
+            color: white;
+        }
+
+        .btn-certificado:hover {
+            background-color: #2e9749;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin: 0 3px;
+        }
+
+        .badge-aprovado {
+            background-color: #34A853;
+            color: white;
+        }
+
+        .badge-reprovado {
+            background-color: #EA4335;
+            color: white;
+        }
+
+        .badge-em-andamento {
+            background-color: #FBBC05;
+            color: #333;
+        }
+
+        .badge-certificado {
+            background-color: #9C27B0;
+            color: white;
+        }
+
+        /* Estatísticas */
+        .secao-titulo-padrao {
+            display: flex;
+            align-items: center;
+            margin: 3rem 0 1.5rem;
+            padding: 0 1rem;
+        }
+
+        .secao-titulo-padrao h2 {
+            color: #1a3459;
+            font-size: 1.8rem;
+        }
+
+        #estatisticasContainer {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin: 0 1rem;
+        }
+
+        .grid-estatisticas {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            text-align: center;
+        }
+
+        .estatistica-item {
+            padding: 1.5rem;
+        }
+
+        .estatistica-valor {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .estatistica-descricao {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        /* Footer */
+        .rodape {
+            background: linear-gradient(135deg, #1a3459, #40a4c0);
+            color: white;
+            padding: 3rem 0 2rem;
+            width: 100%;
+            margin-top: 3rem;
+        }
+
+        .rodape-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .rodape-coluna h3, .rodape-coluna h4 {
+            margin-bottom: 1rem;
+        }
+
+        .rodape-coluna ul {
+            list-style: none;
+        }
+
+        .rodape-coluna li {
+            margin-bottom: 0.5rem;
+        }
+
+        .rodape-coluna a {
+            color: white;
+            text-decoration: none;
+            transition: opacity 0.3s;
+        }
+
+        .rodape-coluna a:hover {
+            opacity: 0.8;
+        }
+
+        .rodape-social .social-icones {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .rodape-social img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+
+        .rodape-social img:hover {
+            transform: scale(1.1);
+        }
+
+        /* Mensagens vazias */
+        .mensagem-vazia {
+            text-align: center;
+            color: #666;
+            padding: 3rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin: 20px;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: white;
+            border-radius: 12px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            color: #1a3459;
+            font-weight: 600;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6c757d;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #1a3459;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            font-size: 1rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #40a4c0;
+        }
+
+        .btn-modal {
+            display: inline-block;
+            padding: 0.8rem 1.5rem;
+            background-color: #40a4c0;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .btn-modal:hover {
+            background-color: #5bbbd9;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .link-modal {
+            color: #40a4c0;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .link-modal:hover {
+            text-decoration: underline;
+        }
+
+        /* ===== MODAL DE DETALHES ===== */
+        .modal-detalhes {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(3px);
+        }
+
+        .modal-detalhes.active {
+            display: flex;
+        }
+
+        .modal-detalhes-content {
+            background-color: white;
+            border-radius: 12px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 700px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-detalhes-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .modal-detalhes-title {
+            font-size: 1.8rem;
+            color: #1a3459;
+            font-weight: 700;
+        }
+
+        .close-modal-detalhes {
+            background: none;
+            border: none;
+            font-size: 1.8rem;
+            cursor: pointer;
+            color: #6c757d;
+            transition: color 0.3s;
+        }
+
+        .close-modal-detalhes:hover {
+            color: #EA4335;
+        }
+
+        .detalhes-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .detalhes-info {
+            background-color: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid #40a4c0;
+        }
+
+        .detalhes-info h4 {
+            color: #1a3459;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .detalhes-info p {
+            font-size: 1rem;
+            color: #333;
+        }
+
+        .detalhes-info .valor-destaque {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #40a4c0;
+        }
+
+        /* Certificado */
+        .certificado-container {
+            padding: 20px;
+            text-align: center;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 2px solid #1a3459;
+            border-radius: 15px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .certificado-header {
+            background: #1a3459;
+            color: white;
+            padding: 20px;
+            border-radius: 10px 10px 0 0;
+            margin-bottom: 30px;
+        }
+
+        .certificado-body {
+            padding: 30px;
+        }
+
+        .certificado-titulo {
+            font-size: 2.5rem;
+            color: #1a3459;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .certificado-texto {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .certificado-nome {
+            font-size: 2rem;
+            color: #40a4c0;
+            font-weight: bold;
+            margin: 20px 0;
+            padding: 10px;
+            border-bottom: 3px solid #d1a10f;
+            border-top: 3px solid #d1a10f;
+        }
+
+        .certificado-curso {
+            font-size: 1.5rem;
+            color: #1a3459;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .certificado-data {
+            font-size: 1.1rem;
+            color: #666;
+            margin-top: 30px;
+        }
+
+        .certificado-assinatura {
+            margin-top: 50px;
+            border-top: 2px solid #1a3459;
+            padding-top: 20px;
+            width: 60%;
+            margin-left: auto;
+            margin-right: auto;
+            text-align: center;
+        }
+
+        .certificado-assinatura img {
+            display: block;
+            margin: 0 auto 10px auto;
+            max-width: 200px;
+            height: auto;
+        }
+
+        .certificado-assinatura p {
+            margin: 5px 0;
+            font-size: 1.1rem;
+            color: #1a3459;
+        }
+
+        .certificado-assinatura p:nth-child(3) {
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        /* Botão de Acessibilidade */
+        #botao-acessibilidade {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background-color: #40a4c0;
+            color: #ffffff;
+            border: none;
+            border-radius: 50%;
+            font-size: 2em;
+            font-weight: bold;
+            line-height: 1;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            z-index: 2000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        #botao-acessibilidade:hover {
+            background-color: #5bbbd9;
+            transform: scale(1.05);
+        }
+
+        /* Menu de Acessibilidade */
+        #menu-acessibilidade-sidebar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 300px;
+            height: 100%;
+            background-color: #f0f4f7;
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+            z-index: 2001;
+            transition: transform 0.4s ease;
+            overflow-y: auto;
+        }
+        
+        .acessibilidade-fechado {
+            transform: translateX(100%);
+        }
+        
+        .acessibilidade-aberto {
+            transform: translateX(0);
+        }
+        
+        .acessibilidade-header {
+            background-color: #1a3459;
+            color: #ffffff;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .acessibilidade-header h3 {
+            margin: 0;
+            font-size: 1.3em;
+        }
+        
+        #fechar-menu-acessibilidade {
+            background: none;
+            border: 1px solid #ffffff;
+            color: #ffffff;
+            font-size: 1.1em;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        
+        #fechar-menu-acessibilidade:hover {
+            background-color: #40a4c0;
+            border-color: #40a4c0;
+        }
+        
+        .acessibilidade-opcoes-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            padding: 20px;
+        }
+        
+        .grid-section-title {
+            grid-column: span 2;
+            background-color: #e3f2fd;
+            color: #1a3459;
+            padding: 8px 15px;
+            margin-top: 15px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            font-size: 1.1em;
+            font-weight: 700;
+            text-align: center;
+        }
+        
+        .acessibilidade-opcao {
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            color: #1a3459;
+            padding: 15px 10px;
+            font-size: 0.9em;
+            font-weight: 600;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            line-height: 1.2;
+            min-height: 75px;
+        }
+        
+        .acessibilidade-opcao:hover {
+            background-color: #e3f2fd;
+            border-color: #40a4c0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .acessibilidade-opcao.ativo {
+            background-color: #40a4c0;
+            color: #ffffff;
+            border-color: #1a3459;
+        }
+        
+        .icone-acao {
+            font-size: 1.8em;
+            display: block;
+            margin-bottom: 5px;
+            color: #40a4c0;
+            font-weight: bold;
+        }
+        
+        .acessibilidade-opcao.ativo .icone-acao {
+            color: #ffffff;
+        }
+        
+        .reset-button {
+            grid-column: span 2;
+            background-color: #d1a10f;
+            color: #1a3459;
+        }
+        
+        .reset-button:hover {
+            background-color: #e0b433;
+            border-color: #1a3459;
+            color: #1a3459;
+        }
+        
+        .reset-button.ativo {
+            background-color: #d1a10f;
+            color: #1a3459;
+        }
+
+        /* Guia de Leitura */
+        #guia-leitura-barra {
+            position: fixed;
+            height: 40px;
+            width: 100%;
+            background-color: rgba(255, 255, 0, 0.4);
+            pointer-events: none;
+            z-index: 9999;
+            top: -100px;
+            transition: none;
+        }
+
+        /* Estilos para Acessibilidade */
+        .ajuste-fonte-1 { font-size: 110% !important; }
+        .ajuste-fonte-2 { font-size: 125% !important; }
+        .ajuste-fonte-3 { font-size: 150% !important; }
+        
+        .ajuste-espaco-1 { letter-spacing: 1px !important; }
+        .ajuste-espaco-2 { letter-spacing: 2px !important; }
+        .ajuste-espaco-3 { letter-spacing: 3px !important; }
+        
+        .fonte-legivel { font-family: Arial, sans-serif !important; }
+        
+        .alto-contraste-escuro {
+            background-color: #000000 !important;
+            color: #ffffff !important;
+        }
+        
+        .alto-contraste-escuro * {
+            background-color: #000000 !important;
+            color: #ffffff !important;
+            border-color: #ffffff !important;
+        }
+        
+        .inverter-cores {
+            filter: invert(1) hue-rotate(180deg);
+        }
+        
+        .protanopia {
+            filter: url('#protanopia-filter');
+        }
+        
+        .deuteranopia {
+            filter: url('#deuteranopia-filter');
+        }
+        
+        .destacar-links a {
+            background-color: yellow !important;
+            color: #000000 !important;
+            padding: 2px 4px !important;
+            border-radius: 3px !important;
+        }
+        
+        .destacar-cabecalhos h1, 
+        .destacar-cabecalhos h2, 
+        .destacar-cabecalhos h3, 
+        .destacar-cabecalhos h4, 
+        .destacar-cabecalhos h5, 
+        .destacar-cabecalhos h6 {
+            background-color: #ffff00 !important;
+            color: #000000 !important;
+            padding: 5px 10px !important;
+            border-radius: 5px !important;
+        }
+        
+        .em-foco {
+            background-color: rgba(255, 255, 0, 0.3) !important;
+            outline: 2px solid #000000 !important;
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .cursos-area {
+                padding: 1rem;
+            }
+            
+            .abas-navegacao {
+                flex-wrap: wrap;
+            }
+            
+            .botao-aba {
+                min-width: 100px;
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
+            
+            .grid-estatisticas {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+            
+            .estatistica-valor {
+                font-size: 2rem;
+            }
+
+            .acessibilidade-opcoes-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .grid-section-title {
+                grid-column: span 1;
+            }
+            
+            .reset-button {
+                grid-column: span 1;
+            }
+            
+            .cartoes-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .acao-btn {
+                min-width: 100%;
+            }
+            
+            .certificado-assinatura {
+                width: 90%;
+            }
+            
+            .certificado-assinatura img {
+                max-width: 150px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .grid-estatisticas {
+                grid-template-columns: 1fr;
+            }
+            
+            .botao-aba {
+                min-width: 80px;
+                padding: 8px 12px;
+                font-size: 0.8rem;
+            }
+            
+            .titulo-destaque h2 {
+                font-size: 1.5rem;
+            }
+            
+            .cartao-info {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .info-item {
+                text-align: left;
+            }
+            
+            .certificado-titulo {
+                font-size: 2rem;
+            }
+            
+            .certificado-nome {
+                font-size: 1.5rem;
+            }
+            
+            .certificado-curso {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body id="body-principal">
+    
+    <!-- CABEÇALHO PADRONIZADO -->
+    <header class="cabecalho">
+        <div class="cabecalho-container">
+            <!-- Logo - sempre em linha única -->
+            <div class="logo-area">
+                <a href="index.html" class="logo">Formação Sem Barreiras</a>
+            </div>
+            
+            <!-- Menu de navegação compacto -->
+            <nav class="menu-principal">
+                <ul>
+                    <li><a href="index.html" class="menu-link">Home</a></li>
+                    <li class="menu-item-logged"><a href="cursos.html" class="menu-link">Cursos</a></li>
+                    <li class="menu-item-logged"><a href="simulador.html" class="menu-link">Simulação</a></li>
+                    <li class="menu-item-logged"><a href="jogos.html" class="menu-link">Jogo</a></li>
+                    <li class="menu-item-logged"><a href="historico.html" class="menu-link ativo">Histórico</a></li>
+                    <!-- Link Admin (só aparece para administradores) -->
+                    <li class="menu-item-logged admin-item" style="display: none;">
+                        <a href="admin.html" class="menu-link">Admin</a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <!-- Área do usuário compacta -->
+            <div class="user-actions">
+                <div class="user-menu" id="userMenu">
+                    <span class="user-info" id="userName">Olá, Usuário!</span>
+                    <button class="botao-sair" onclick="logout()">Sair</button>
+                </div>
+                <button id="loginBtn" class="botao-login" onclick="showModal('loginModal')">
+                    <span class="icone-login">👤</span> Área do Cliente
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <section class="cursos-area">
+        <div class="titulo-destaque">
+            <h2>MEU HISTÓRICO</h2>
+        </div>
+
+        <!-- Abas -->
+        <div class="abas-container">
+            <div class="abas-navegacao">
+                <button class="botao-aba ativo" id="abaSimulacoes" onclick="mostrarAba('simulacoes')">
+                    <i class="fas fa-comments"></i> Simulações
+                </button>
+                <button class="botao-aba" id="abaCursos" onclick="mostrarAba('cursos')">
+                    <i class="fas fa-graduation-cap"></i> Cursos
+                </button>
+            </div>
+        </div>
+        
+        <!-- Conteúdo das Abas -->
+        <div id="conteudoSimulacoes" class="conteudo-aba ativo">
+            <div class="cartoes-container" id="containerSimulacoes">
+                <!-- Cartões de simulações serão carregados aqui -->
+            </div>
+        </div>
+
+        <div id="conteudoCursos" class="conteudo-aba">
+            <div class="cartoes-container" id="containerCursos">
+                <!-- Cartões de cursos serão carregados aqui -->
+            </div>
+        </div>
+
+        <!-- Estatísticas -->
+        <div style="width: 100%; margin: 50px 0;">
+            <div class="secao-titulo-padrao">
+                <h2 id="estatisticasTitulo">ESTATÍSTICAS DAS SIMULAÇÕES</h2>
+            </div>
+            <div id="estatisticasContainer">
+                <div class="grid-estatisticas">
+                    <div class="estatistica-item">
+                        <div class="estatistica-valor" id="totalItens" style="color: #40a4c0;">0</div>
+                        <div class="estatistica-descricao" id="descricaoTotal">Total de Simulações</div>
+                    </div>
+                    <div class="estatistica-item">
+                        <div class="estatistica-valor" id="mediaPontuacao" style="color: #34A853;">0%</div>
+                        <div class="estatistica-descricao" id="descricaoMedia">Média das Simulações</div>
+                    </div>
+                    <div class="estatistica-item">
+                        <div class="estatistica-valor" id="aprovacoes" style="color: #d1a10f;">0</div>
+                        <div class="estatistica-descricao" id="descricaoAprovacoes">Aprovações em Simulações</div>
+                    </div>
+                    <div class="estatistica-item">
+                        <div class="estatistica-valor" id="melhorPontuacao" style="color: #9C27B0;">0%</div>
+                        <div class="estatistica-descricao" id="descricaoMelhor">Melhor Pontuação</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Modais de Login e Cadastro -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Entrar na Conta</h3>
+                <button class="close-modal" onclick="closeModal('loginModal')">&times;</button>
+            </div>
+            <div id="loginMessage"></div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginEmail" class="form-label">E-mail</label>
+                    <input type="email" id="loginEmail" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword" class="form-label">Senha</label>
+                    <input type="password" id="loginPassword" class="form-control" required>
+                </div>
+                <button type="submit" class="btn-modal">Entrar</button>
+            </form>
+            <p style="margin-top: 1.5rem; text-align: center;">
+                Não tem uma conta? <a href="#" class="link-modal" onclick="closeModal('loginModal'); showModal('registerModal')">Cadastre-se aqui</a>.
+            </p>
+        </div>
+    </div>
+
+    <div id="registerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Criar uma Conta</h3>
+                <button class="close-modal" onclick="closeModal('registerModal')">&times;</button>
+            </div>
+            <div id="registerMessage"></div>
+            <form id="registerForm">
+                <div class="form-group">
+                    <label for="regName" class="form-label">Nome completo</label>
+                    <input type="text" id="regName" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="regEmail" class="form-label">E-mail</label>
+                    <input type="email" id="regEmail" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="regPassword" class="form-label">Senha</label>
+                    <input type="password" id="regPassword" class="form-control" required minlength="6">
+                </div>
+                <div class="form-group">
+                    <label for="regAccessibility" class="form-label">Preferências de Acessibilidade</label>
+                    <select id="regAccessibility" class="form-control">
+                        <option value="none">Nenhuma necessidade específica</option>
+                        <option value="deaf">Surdo</option>
+                        <option value="blind">Deficiência visual</option>
+                        <option value="intellectual">Deficiência intelectual</option>
+                        <option value="autistic">Autista</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-modal">Criar conta</button>
+            </form>
+            <p style="margin-top: 1.5rem; text-align: center;">
+                Já tem uma conta? <a href="#" class="link-modal" onclick="closeModal('registerModal'); showModal('loginModal')">Faça login aqui</a>.
+            </p>
+        </div>
+    </div>
+
+    <!-- ===== MODAL DE DETALHES DA SIMULAÇÃO ===== -->
+    <div id="detalhesSimulacaoModal" class="modal-detalhes">
+        <div class="modal-detalhes-content">
+            <div class="modal-detalhes-header">
+                <h3 class="modal-detalhes-title">Detalhes da Simulação</h3>
+                <button class="close-modal-detalhes" onclick="closeDetalhesModal()">&times;</button>
+            </div>
+            <div id="detalhesConteudo">
+                <!-- Conteúdo será preenchido dinamicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== MODAL DE DETALHES DO CURSO ===== -->
+    <div id="detalhesCursoModal" class="modal-detalhes">
+        <div class="modal-detalhes-content">
+            <div class="modal-detalhes-header">
+                <h3 class="modal-detalhes-title">Detalhes do Curso</h3>
+                <button class="close-modal-detalhes" onclick="closeDetalhesCursoModal()">&times;</button>
+            </div>
+            <div id="detalhesCursoConteudo">
+                <!-- Conteúdo será preenchido dinamicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== MODAL DE CERTIFICADO ===== -->
+    <div id="certificadoModal" class="modal-detalhes">
+        <div class="modal-detalhes-content">
+            <div class="modal-detalhes-header">
+                <h3 class="modal-detalhes-title">Certificado</h3>
+                <button class="close-modal-detalhes" onclick="closeCertificadoModal()">&times;</button>
+            </div>
+            <div id="certificadoConteudo">
+                <!-- Conteúdo será preenchido dinamicamente -->
+            </div>
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="acao-btn btn-certificado" onclick="downloadCertificate()">
+                    <i class="fas fa-download"></i> Baixar Certificado (PDF)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Elementos de Acessibilidade -->
+    <div id="guia-leitura-barra"></div>
+    
+    <!-- Menu de Acessibilidade -->
+    <aside id="menu-acessibilidade-sidebar" class="acessibilidade-fechado">
+        <div class="acessibilidade-header">
+            <h3>Acessibilidade</h3>
+            <button id="fechar-menu-acessibilidade" aria-label="Fechar menu">X</button>
+        </div>
+        
+        <div class="acessibilidade-opcoes-grid">
+            
+            <h4 class="grid-section-title">Leitura e Dislexia</h4>
+            <button class="acessibilidade-opcao" data-acao="aumentar-fonte">
+                <span class="icone-acao">A+</span> Aumentar Fonte
+            </button>
+            <button class="acessibilidade-opcao" data-acao="diminuir-fonte">
+                <span class="icone-acao">A-</span> Diminuir Fonte
+            </button>
+            <button class="acessibilidade-opcao" data-acao="fonte-legivel">
+                <span class="icone-acao">🔤</span> Fonte Legível
+            </button>
+            <button class="acessibilidade-opcao" data-acao="espacamento-texto">
+                <span class="icone-acao">↔️</span> Aumentar Espaço
+            </button>
+
+            <h4 class="grid-section-title">Contraste e Cores</h4>
+            <button class="acessibilidade-opcao" data-acao="alto-contraste-escuro">
+                <span class="icone-acao">🌙</span> Alto Contraste Escuro
+            </button>
+            <button class="acessibilidade-opcao" data-acao="inverter-cores">
+                <span class="icone-acao">🔄</span> Inverter Cores
+            </button>
+            <button class="acessibilidade-opcao" data-acao="protanopia">
+                <span class="icone-acao">🔴</span> Modo Protanopia
+            </button>
+            <button class="acessibilidade-opcao" data-acao="deuteranopia">
+                <span class="icone-acao">🟢</span> Modo Deuteranopia
+            </button>
+
+            <h4 class="grid-section-title">Foco e Navegação</h4>
+            <button class="acessibilidade-opcao" data-acao="destacar-links">
+                <span class="icone-acao">🔗</span> Destacar Links
+            </button>
+            <button class="acessibilidade-opcao" data-acao="destacar-cabecalhos">
+                <span class="icone-acao">H1</span> Destacar Cabeçalhos
+            </button>
+            <button class="acessibilidade-opcao" data-acao="guia-leitura">
+                <span class="icone-acao">💬</span> Guia de Leitura
+            </button>
+             <button class="acessibilidade-opcao" data-acao="linhas-leitura">
+                <span class="icone-acao">🔍</span> Linhas de Leitura
+            </button>
+            
+            <button class="acessibilidade-opcao reset-button" data-acao="reset">
+                <span class="icone-acao">🔄</span> **REDEFINIR TUDO**
+            </button>
+        </div>
+    </aside>
+
+    <button id="botao-acessibilidade" aria-label="Abrir menu de acessibilidade">♿</button>
+
+    <!-- VLibras Widget -->
+    <div vw class="enabled">
+        <div vw-access-button class="active"></div>
+        <div vw-plugin-wrapper>
+            <div class="vw-plugin-top-wrapper"></div>
+        </div>
+    </div>
+
+    <footer class="rodape">
+        <div class="rodape-container">
+            <div class="rodape-coluna rodape-info">
+                <h3>Formação Sem Barreiras</h3>
+                <p>&copy; 2025 Todos os direitos reservados a Maria Clara.</p>
+            </div>
+            <div class="rodape-coluna">
+                <h4>Links Úteis</h4>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="cursos.html" class="menu-item-logged">Cursos</a></li>
+                    <li><a href="simulador.html" class="menu-item-logged">Simulação entrevista</a></li>
+                    <li><a href="jogos.html" class="menu-item-logged">Jogos</a></li>
+                    <li><a href="historico.html" class="menu-item-logged">Histórico</a></li>
+                    <li><a href="javascript:void(0);" onclick="showModal('loginModal')">Cadastro/Login</a></li>
+                </ul>
+            </div>
+            <div class="rodape-coluna rodape-social">
+                <h4>Siga-nos</h4>
+                <div class="social-icones">
+                    <a href="#"><img src="img/instagram.png" alt="Instagram"></a> 
+                    <a href="#"><img src="img/Tiktok_icon.svg.png" alt="TikTok"></a> 
+                    <a href="#"><img src="img/Youtube_logo.png" alt="YouTube"></a> 
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Filtros SVG para modos de daltonismo -->
+    <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="0" height="0" style="position:absolute">
+        <defs>
+            <!-- Filtro para Protanopia (deficiência para vermelho) -->
+            <filter id="protanopia-filter">
+                <feColorMatrix type="matrix" values="0.567, 0.433, 0, 0, 0
+                                                     0.558, 0.442, 0, 0, 0
+                                                     0, 0.242, 0.758, 0, 0
+                                                     0, 0, 0, 1, 0" />
+            </filter>
+            
+            <!-- Filtro para Deuteranopia (deficiência para verde) -->
+            <filter id="deuteranopia-filter">
+                <feColorMatrix type="matrix" values="0.625, 0.375, 0, 0, 0
+                                                     0.7, 0.3, 0, 0, 0
+                                                     0, 0.3, 0.7, 0, 0
+                                                     0, 0, 0, 1, 0" />
+            </filter>
+        </defs>
+    </svg>
+
+    <script>
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyAcfMe_zFeS7mGJA1UhA65goiP1gOh-vlI",
+            authDomain: "teste-esse-06-12.firebaseapp.com",
+            projectId: "teste-esse-06-12",
+            storageBucket: "teste-esse-06-12.firebasestorage.app",
+            messagingSenderId: "988541369532",
+            appId: "1:988541369532:web:f5ab3bae7bc0279b1064b9",
+            measurementId: "G-Q2WVXT54TX"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        let currentUser = null;
+        let currentCertificateData = null;
+
+        // Funções do Modal
+        function showModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+            document.getElementById('loginMessage').innerHTML = '';
+            document.getElementById('registerMessage').innerHTML = '';
+            document.getElementById('loginForm').reset();
+            document.getElementById('registerForm').reset();
+        }
+
+        // Funções do Modal de Detalhes
+        function showDetalhesModal() {
+            document.getElementById('detalhesSimulacaoModal').classList.add('active');
+        }
+
+        function closeDetalhesModal() {
+            document.getElementById('detalhesSimulacaoModal').classList.remove('active');
+        }
+
+        function showDetalhesCursoModal() {
+            document.getElementById('detalhesCursoModal').classList.add('active');
+        }
+
+        function closeDetalhesCursoModal() {
+            document.getElementById('detalhesCursoModal').classList.remove('active');
+        }
+
+        function showCertificadoModal() {
+            document.getElementById('certificadoModal').classList.add('active');
+        }
+
+        function closeCertificadoModal() {
+            document.getElementById('certificadoModal').classList.remove('active');
+        }
+
+        // Fechar quando clicar fora
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                const modals = document.querySelectorAll('.modal.active');
+                modals.forEach(modal => {
+                    modal.classList.remove('active');
+                });
+            }
+            if (event.target.classList.contains('modal-detalhes')) {
+                closeDetalhesModal();
+                closeDetalhesCursoModal();
+                closeCertificadoModal();
+            }
+        }
+
+        // Autenticação
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+            const name = document.getElementById('regName').value;
+            const accessibility = document.getElementById('regAccessibility').value;
+
+            auth.createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    const user = userCredential.user;
+                    
+                    return db.collection('users').doc(user.uid).set({
+                        name: name,
+                        email: email,
+                        accessibility: accessibility,
+                        admin: false,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        avatar: "avatar1"
+                    });
+                })
+                .then(() => {
+                    return db.collection('countUsers').doc('contador').set({
+                        totalUsers: firebase.firestore.FieldValue.increment(1),
+                        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                    }, { merge: true });
+                })
+                .then(() => {
+                    document.getElementById('registerMessage').innerHTML = 
+                        '<div class="alert alert-success">Conta criada com sucesso! Redirecionando...</div>';
+                    setTimeout(() => {
+                        closeModal('registerModal');
+                        updateUIAfterLogin();
+                    }, 2000);
+                })
+                .catch((error) => {
+                    document.getElementById('registerMessage').innerHTML = 
+                        `<div class="alert alert-error">Erro ao criar conta: ${error.message}</div>`;
+                });
+        });
+
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            auth.signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    currentUser = userCredential.user;
+                    updateUIAfterLogin();
+                    closeModal('loginModal');
+                })
+                .catch((error) => {
+                    document.getElementById('loginMessage').innerHTML = 
+                        `<div class="alert alert-error">Erro ao fazer login: ${error.message}</div>`;
+                });
+        });
+
+        function logout() {
+            auth.signOut().then(() => {
+                currentUser = null;
+                updateUIAfterLogout();
+            });
+        }
+
+        function updateUIAfterLogin() {
+            document.getElementById('loginBtn').style.display = 'none';
+            document.getElementById('userMenu').style.display = 'flex';
+            
+            document.querySelectorAll('.menu-item-logged').forEach(item => {
+                item.style.display = 'list-item';
+            });
+
+            db.collection('users').doc(currentUser.uid).get()
+                .then((doc) => {
+                    if (doc.exists) {
+                        const userData = doc.data();
+                        
+                        const nomeCurto = userData.name.split(' ')[0];
+                        document.getElementById('userName').textContent = `Olá, ${nomeCurto}!`;
+                        
+                        if (userData.admin === true) {
+                            const adminItems = document.querySelectorAll('.admin-item');
+                            adminItems.forEach(item => {
+                                item.style.display = 'list-item';
+                                item.classList.add('mostrar');
+                            });
+                        }
+                    }
+                })
+                .catch((error) => {
+                    console.error("Erro ao obter dados do usuário:", error);
+                });
+
+            // Carregar dados do histórico
+            carregarEstatisticasSimulacoes();
+            carregarSimulacoes();
+        }
+
+        function updateUIAfterLogout() {
+            document.getElementById('loginBtn').style.display = 'block';
+            document.getElementById('userMenu').style.display = 'none';
+            
+            document.querySelectorAll('.menu-item-logged').forEach(item => {
+                item.style.display = 'none';
+            });
+            
+            document.querySelectorAll('.admin-item').forEach(item => {
+                item.style.display = 'none';
+                item.classList.remove('mostrar');
+            });
+            
+            // Limpar conteúdo ao deslogar
+            document.getElementById('containerSimulacoes').innerHTML = '';
+            document.getElementById('containerCursos').innerHTML = '';
+            document.getElementById('totalItens').textContent = '0';
+            document.getElementById('mediaPontuacao').textContent = '0%';
+            document.getElementById('aprovacoes').textContent = '0';
+            document.getElementById('melhorPontuacao').textContent = '0%';
+        }
+
+        // Função para trocar entre abas
+        function mostrarAba(aba) {
+            if (!currentUser) {
+                showModal('loginModal');
+                return;
+            }
+
+            // Remover classe ativo de todas as abas
+            document.querySelectorAll('.botao-aba').forEach(botao => {
+                botao.classList.remove('ativo');
+            });
+            
+            document.querySelectorAll('.conteudo-aba').forEach(conteudo => {
+                conteudo.classList.remove('ativo');
+            });
+            
+            // Adicionar classe ativo na aba clicada
+            if (aba === 'simulacoes') {
+                document.getElementById('abaSimulacoes').classList.add('ativo');
+                document.getElementById('conteudoSimulacoes').classList.add('ativo');
+                document.getElementById('estatisticasTitulo').textContent = 'ESTATÍSTICAS DAS SIMULAÇÕES';
+                atualizarLabelsEstatisticas('simulacoes');
+                carregarEstatisticasSimulacoes();
+                carregarSimulacoes();
+            } else if (aba === 'cursos') {
+                document.getElementById('abaCursos').classList.add('ativo');
+                document.getElementById('conteudoCursos').classList.add('ativo');
+                document.getElementById('estatisticasTitulo').textContent = 'ESTATÍSTICAS DOS CURSOS';
+                atualizarLabelsEstatisticas('cursos');
+                carregarEstatisticasCursos();
+                carregarCursos();
+            }
+        }
+
+        // Função para atualizar os labels das estatísticas
+        function atualizarLabelsEstatisticas(tipo) {
+            if (tipo === 'simulacoes') {
+                document.getElementById('descricaoTotal').textContent = 'Total de Simulações';
+                document.getElementById('descricaoMedia').textContent = 'Média das Simulações';
+                document.getElementById('descricaoAprovacoes').textContent = 'Aprovações em Simulações';
+                document.getElementById('descricaoMelhor').textContent = 'Melhor Pontuação';
+            } else if (tipo === 'cursos') {
+                document.getElementById('descricaoTotal').textContent = 'Cursos Concluídos';
+                document.getElementById('descricaoMedia').textContent = 'Média dos Cursos';
+                document.getElementById('descricaoAprovacoes').textContent = 'Aprovações em Cursos';
+                document.getElementById('descricaoMelhor').textContent = 'Melhor Pontuação';
+            }
+        }
+
+        // Função para carregar simulações do usuário
+        async function carregarSimulacoes() {
+            if (!currentUser) return;
+
+            try {
+                // Primeiro, tenta a consulta com ordenação
+                let snapshot;
+                try {
+                    snapshot = await db.collection('resultadoSimulacao')
+                        .where('userId', '==', currentUser.uid)
+                        .orderBy('data', 'desc')
+                        .get();
+                } catch (indexError) {
+                    // Se falhar por falta de índice, faz sem ordenação
+                    console.warn('Índice não encontrado, carregando sem ordenação:', indexError.message);
+                    snapshot = await db.collection('resultadoSimulacao')
+                        .where('userId', '==', currentUser.uid)
+                        .get();
+                    
+                    // Ordena manualmente no JavaScript
+                    const dados = [];
+                    snapshot.forEach(doc => {
+                        dados.push({ id: doc.id, ...doc.data() });
+                    });
+                    
+                    // Ordena por data (mais recente primeiro)
+                    dados.sort((a, b) => {
+                        const dataA = a.data ? a.data.toDate() : new Date(0);
+                        const dataB = b.data ? b.data.toDate() : new Date(0);
+                        return dataB - dataA;
+                    });
+                    
+                    // Processa os dados ordenados
+                    const container = document.getElementById('containerSimulacoes');
+                    
+                    if (dados.length === 0) {
+                        container.innerHTML = `
+                            <div class="mensagem-vazia">
+                                <i class="fas fa-comments" style="font-size: 3rem; color: #40a4c0; margin-bottom: 1rem;"></i>
+                                <h3>Nenhuma simulação realizada</h3>
+                                <p>Realize simulações de entrevista para ver seu histórico aqui.</p>
+                                <a href="simulador.html" class="acao-btn btn-detalhes" style="margin-top: 1rem;">
+                                    <i class="fas fa-play"></i> Fazer Simulação
+                                </a>
+                            </div>`;
+                        return;
+                    }
+
+                    let cartoesHTML = '';
+                    
+                    dados.forEach((simulacao) => {
+                        const data = simulacao.data ? new Date(simulacao.data.toDate()) : new Date();
+                        const score = Math.round(simulacao.pontuacao || 0);
+                        const status = score >= 70 ? 'Aprovado' : 'Reprovado';
+                        const statusClass = score >= 70 ? 'badge-aprovado' : 'badge-reprovado';
+                        const statusColor = score >= 70 ? '#34A853' : '#EA4335';
+                        
+                        cartoesHTML += `
+                            <div class="cartao">
+                                <div class="cartao-cabecalho">
+                                    <h3>${simulacao.tipo || 'Simulação de Entrevista'}</h3>
+                                    <span class="tipo">Simulação</span>
+                                </div>
+                                <div class="cartao-corpo">
+                                    <div class="cartao-info">
+                                        <div class="info-item">
+                                            <span class="label">Data</span>
+                                            <span class="data">${data.toLocaleDateString('pt-BR')}</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <span class="label">Pontuação</span>
+                                            <span class="valor" style="color: ${statusColor}">${score}%</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="cartao-status ${statusClass}">${status}</div>
+                                    
+                                    <div class="cartao-acoes">
+                                        <button class="acao-btn btn-detalhes" onclick="viewSimulationDetails('${simulacao.id}')">
+                                            <i class="fas fa-eye"></i> Ver Detalhes
+                                        </button>
+                                        ${score >= 70 ? `
+                                            <button class="acao-btn btn-certificado" onclick="gerarCertificadoSimulacao('${simulacao.id}')">
+                                                <i class="fas fa-certificate"></i> Ver Certificado
+                                            </button>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    container.innerHTML = cartoesHTML;
+                    return;
+                }
+                
+                // Se chegou aqui, a consulta com ordenação funcionou
+                const container = document.getElementById('containerSimulacoes');
+                
+                if (snapshot.empty) {
+                    container.innerHTML = `
+                        <div class="mensagem-vazia">
+                            <i class="fas fa-comments" style="font-size: 3rem; color: #40a4c0; margin-bottom: 1rem;"></i>
+                            <h3>Nenhuma simulação realizada</h3>
+                            <p>Realize simulações de entrevista para ver seu histórico aqui.</p>
+                            <a href="simulador.html" class="acao-btn btn-detalhes" style="margin-top: 1rem;">
+                                <i class="fas fa-play"></i> Fazer Simulação
+                            </a>
+                        </div>`;
+                    return;
+                }
+
+                let cartoesHTML = '';
+                
+                snapshot.forEach((doc) => {
+                    const simulacao = doc.data();
+                    const data = simulacao.data ? new Date(simulacao.data.toDate()) : new Date();
+                    const score = Math.round(simulacao.pontuacao || 0);
+                    const status = score >= 70 ? 'Aprovado' : 'Reprovado';
+                    const statusClass = score >= 70 ? 'badge-aprovado' : 'badge-reprovado';
+                    const statusColor = score >= 70 ? '#34A853' : '#EA4335';
+                    
+                    cartoesHTML += `
+                        <div class="cartao">
+                            <div class="cartao-cabecalho">
+                                <h3>${simulacao.tipo || 'Simulação de Entrevista'}</h3>
+                                <span class="tipo">Simulação</span>
+                            </div>
+                            <div class="cartao-corpo">
+                                <div class="cartao-info">
+                                    <div class="info-item">
+                                        <span class="label">Data</span>
+                                        <span class="data">${data.toLocaleDateString('pt-BR')}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="label">Pontuação</span>
+                                        <span class="valor" style="color: ${statusColor}">${score}%</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="cartao-status ${statusClass}">${status}</div>
+                                
+                                <div class="cartao-acoes">
+                                    <button class="acao-btn btn-detalhes" onclick="viewSimulationDetails('${doc.id}')">
+                                        <i class="fas fa-eye"></i> Ver Detalhes
+                                    </button>
+                                    ${score >= 70 ? `
+                                        <button class="acao-btn btn-certificado" onclick="gerarCertificadoSimulacao('${doc.id}')">
+                                            <i class="fas fa-certificate"></i> Ver Certificado
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = cartoesHTML;
+            } catch (error) {
+                console.error('Erro ao carregar simulações:', error);
+                document.getElementById('containerSimulacoes').innerHTML = `
+                    <div class="mensagem-vazia">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: #EA4335; margin-bottom: 1rem;"></i>
+                        <h3>Erro ao carregar simulações</h3>
+                        <p>${error.message}</p>
+                        <button class="acao-btn btn-detalhes" onclick="carregarSimulacoes()" style="margin-top: 1rem;">
+                            <i class="fas fa-redo"></i> Tentar Novamente
+                        </button>
+                    </div>`;
+            }
+        }
+
+        // Função para carregar cursos do usuário
+        async function carregarCursos() {
+            if (!currentUser) return;
+
+            try {
+                // Primeiro, tenta a consulta com ordenação
+                let snapshot;
+                try {
+                    snapshot = await db.collection('resultadoCurso')
+                        .where('userId', '==', currentUser.uid)
+                        .orderBy('data', 'desc')
+                        .get();
+                } catch (indexError) {
+                    // Se falhar por falta de índice, faz sem ordenação
+                    console.warn('Índice não encontrado, carregando sem ordenação:', indexError.message);
+                    snapshot = await db.collection('resultadoCurso')
+                        .where('userId', '==', currentUser.uid)
+                        .get();
+                    
+                    // Ordena manualmente no JavaScript
+                    const dados = [];
+                    snapshot.forEach(doc => {
+                        dados.push({ id: doc.id, ...doc.data() });
+                    });
+                    
+                    // Ordena por data (mais recente primeiro)
+                    dados.sort((a, b) => {
+                        const dataA = a.data ? a.data.toDate() : new Date(0);
+                        const dataB = b.data ? b.data.toDate() : new Date(0);
+                        return dataB - dataA;
+                    });
+                    
+                    // Processa os dados ordenados
+                    const container = document.getElementById('containerCursos');
+                    
+                    if (dados.length === 0) {
+                        container.innerHTML = `
+                            <div class="mensagem-vazia">
+                                <i class="fas fa-graduation-cap" style="font-size: 3rem; color: #40a4c0; margin-bottom: 1rem;"></i>
+                                <h3>Nenhum curso concluído</h3>
+                                <p>Conclua um curso para ver seu histórico aqui.</p>
+                                <a href="cursos.html" class="acao-btn btn-detalhes" style="margin-top: 1rem;">
+                                    <i class="fas fa-play"></i> Ver Cursos
+                                </a>
+                            </div>`;
+                        return;
+                    }
+
+                    let cartoesHTML = '';
+                    
+                    dados.forEach((curso) => {
+                        const data = curso.data ? new Date(curso.data.toDate()) : new Date();
+                        const score = Math.round(curso.pontuacao || 0);
+                        const status = curso.concluido ? (score >= 70 ? 'Aprovado' : 'Reprovado') : 'Em andamento';
+                        const statusClass = curso.concluido ? (score >= 70 ? 'badge-aprovado' : 'badge-reprovado') : 'badge-em-andamento';
+                        const statusColor = curso.concluido ? (score >= 70 ? '#34A853' : '#EA4335') : '#FBBC05';
+                        
+                        cartoesHTML += `
+                            <div class="cartao">
+                                <div class="cartao-cabecalho">
+                                    <h3>${curso.cursoNome || 'Curso'}</h3>
+                                    <span class="tipo">Curso</span>
+                                </div>
+                                <div class="cartao-corpo">
+                                    <div class="cartao-info">
+                                        <div class="info-item">
+                                            <span class="label">Data</span>
+                                            <span class="data">${data.toLocaleDateString('pt-BR')}</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <span class="label">Pontuação</span>
+                                            <span class="valor" style="color: ${statusColor}">${score}%</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="cartao-status ${statusClass}">${status}</div>
+                                    
+                                    <div class="cartao-acoes">
+                                        <button class="acao-btn btn-detalhes" onclick="viewCourseDetails('${curso.id}')">
+                                            <i class="fas fa-eye"></i> Ver Detalhes
+                                        </button>
+                                        ${score >= 70 && curso.concluido ? `
+                                            <button class="acao-btn btn-certificado" onclick="viewCertificate('${curso.id}')">
+                                                <i class="fas fa-certificate"></i> Ver Certificado
+                                            </button>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    container.innerHTML = cartoesHTML;
+                    return;
+                }
+                
+                // Se chegou aqui, a consulta com ordenação funcionou
+                const container = document.getElementById('containerCursos');
+                
+                if (snapshot.empty) {
+                    container.innerHTML = `
+                        <div class="mensagem-vazia">
+                            <i class="fas fa-graduation-cap" style="font-size: 3rem; color: #40a4c0; margin-bottom: 1rem;"></i>
+                            <h3>Nenhum curso concluído</h3>
+                            <p>Conclua um curso para ver seu histórico aqui.</p>
+                            <a href="cursos.html" class="acao-btn btn-detalhes" style="margin-top: 1rem;">
+                                <i class="fas fa-play"></i> Ver Cursos
+                            </a>
+                        </div>`;
+                    return;
+                }
+
+                let cartoesHTML = '';
+                
+                snapshot.forEach((doc) => {
+                    const curso = doc.data();
+                    const data = curso.data ? new Date(curso.data.toDate()) : new Date();
+                    const score = Math.round(curso.pontuacao || 0);
+                    const status = curso.concluido ? (score >= 70 ? 'Aprovado' : 'Reprovado') : 'Em andamento';
+                    const statusClass = curso.concluido ? (score >= 70 ? 'badge-aprovado' : 'badge-reprovado') : 'badge-em-andamento';
+                    const statusColor = curso.concluido ? (score >= 70 ? '#34A853' : '#EA4335') : '#FBBC05';
+                    
+                    cartoesHTML += `
+                        <div class="cartao">
+                            <div class="cartao-cabecalho">
+                                <h3>${curso.cursoNome || 'Curso'}</h3>
+                                <span class="tipo">Curso</span>
+                            </div>
+                            <div class="cartao-corpo">
+                                <div class="cartao-info">
+                                    <div class="info-item">
+                                        <span class="label">Data</span>
+                                        <span class="data">${data.toLocaleDateString('pt-BR')}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="label">Pontuação</span>
+                                        <span class="valor" style="color: ${statusColor}">${score}%</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="cartao-status ${statusClass}">${status}</div>
+                                
+                                <div class="cartao-acoes">
+                                    <button class="acao-btn btn-detalhes" onclick="viewCourseDetails('${doc.id}')">
+                                        <i class="fas fa-eye"></i> Ver Detalhes
+                                    </button>
+                                    ${score >= 70 && curso.concluido ? `
+                                        <button class="acao-btn btn-certificado" onclick="viewCertificate('${doc.id}')">
+                                            <i class="fas fa-certificate"></i> Ver Certificado
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = cartoesHTML;
+            } catch (error) {
+                console.error('Erro ao carregar cursos:', error);
+                document.getElementById('containerCursos').innerHTML = `
+                    <div class="mensagem-vazia">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: #EA4335; margin-bottom: 1rem;"></i>
+                        <h3>Erro ao carregar cursos</h3>
+                        <p>${error.message}</p>
+                        <button class="acao-btn btn-detalhes" onclick="carregarCursos()" style="margin-top: 1rem;">
+                            <i class="fas fa-redo"></i> Tentar Novamente
+                        </button>
+                    </div>`;
+            }
+        }
+
+        // Função para ver detalhes da simulação
+        async function viewSimulationDetails(simulationId) {
+            try {
+                const simulationDoc = await db.collection('resultadoSimulacao').doc(simulationId).get();
+                
+                if (!simulationDoc.exists) {
+                    alert('Simulação não encontrada.');
+                    return;
+                }
+                
+                const simulation = simulationDoc.data();
+                const formattedDate = simulation.data ? 
+                    new Date(simulation.data.toDate()).toLocaleDateString('pt-BR') + ' ' + 
+                    new Date(simulation.data.toDate()).toLocaleTimeString('pt-BR') : 
+                    'N/A';
+                
+                let detalhesHTML = `
+                    <div class="detalhes-grid">
+                        <div class="detalhes-info">
+                            <h4>Tipo</h4>
+                            <p>${simulation.tipo || 'Simulação de Entrevista'}</p>
+                        </div>
+                        <div class="detalhes-info">
+                            <h4>Data da Simulação</h4>
+                            <p>${formattedDate}</p>
+                        </div>
+                        <div class="detalhes-info">
+                            <h4>Pontuação</h4>
+                            <p class="valor-destaque">${simulation.pontuacao || 0}%</p>
+                        </div>
+                        <div class="detalhes-info">
+                            <h4>Status</h4>
+                            <p style="color: ${simulation.pontuacao >= 70 ? '#34A853' : '#EA4335'}; font-weight: bold;">
+                                ${simulation.pontuacao >= 70 ? 'APROVADO' : 'REPROVADO'}
+                            </p>
+                        </div>
+                    </div>
+                `;
+                
+                if (simulation.acertos !== undefined && simulation.totalPerguntas !== undefined) {
+                    detalhesHTML += `
+                        <div class="detalhes-grid">
+                            <div class="detalhes-info">
+                                <h4>Acertos</h4>
+                                <p class="valor-destaque" style="color: #34A853;">${simulation.acertos}</p>
+                            </div>
+                            <div class="detalhes-info">
+                                <h4>Total de Perguntas</h4>
+                                <p class="valor-destaque">${simulation.totalPerguntas}</p>
+                            </div>
+                            <div class="detalhes-info">
+                                <h4>Erros</h4>
+                                <p class="valor-destaque" style="color: #EA4335;">${simulation.totalPerguntas - simulation.acertos}</p>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                document.getElementById('detalhesConteudo').innerHTML = detalhesHTML;
+                showDetalhesModal();
+                
+            } catch (error) {
+                console.error('Erro ao carregar detalhes da simulação:', error);
+                alert('Erro ao carregar detalhes da simulação.');
+            }
+        }
+
+        // Função para ver detalhes do curso
+        async function viewCourseDetails(courseId) {
+            try {
+                const courseDoc = await db.collection('resultadoCurso').doc(courseId).get();
+                
+                if (!courseDoc.exists) {
+                    alert('Curso não encontrado.');
+                    return;
+                }
+                
+                const course = courseDoc.data();
+                const formattedDate = course.data ? 
+                    new Date(course.data.toDate()).toLocaleDateString('pt-BR') : 
+                    'N/A';
+                
+                let detalhesHTML = `
+                    <div class="detalhes-grid">
+                        <div class="detalhes-info">
+                            <h4>Curso</h4>
+                            <p>${course.cursoNome || 'Curso'}</p>
+                        </div>
+                        <div class="detalhes-info">
+                            <h4>Data de Conclusão</h4>
+                            <p>${formattedDate}</p>
+                        </div>
+                        <div class="detalhes-info">
+                            <h4>Pontuação</h4>
+                            <p class="valor-destaque">${course.pontuacao || 0}%</p>
+                        </div>
+                        <div class="detalhes-info">
+                            <h4>Status</h4>
+                            <p style="color: ${course.pontuacao >= 70 ? '#34A853' : '#EA4335'}; font-weight: bold;">
+                                ${course.pontuacao >= 70 ? 'APROVADO' : 'REPROVADO'}
+                            </p>
+                        </div>
+                    </div>
+                `;
+                
+                document.getElementById('detalhesCursoConteudo').innerHTML = detalhesHTML;
+                showDetalhesCursoModal();
+                
+            } catch (error) {
+                console.error('Erro ao carregar detalhes do curso:', error);
+                alert('Erro ao carregar detalhes do curso.');
+            }
+        }
+
+        // Função para ver certificado
+        async function viewCertificate(courseId) {
+            try {
+                const courseDoc = await db.collection('resultadoCurso').doc(courseId).get();
+                
+                if (!courseDoc.exists) {
+                    alert('Curso não encontrado.');
+                    return;
+                }
+                
+                const course = courseDoc.data();
+                const userDoc = await db.collection('users').doc(currentUser.uid).get();
+                const userData = userDoc.exists ? userDoc.data() : {};
+                
+                const formattedDate = course.data ? 
+                    new Date(course.data.toDate()).toLocaleDateString('pt-BR') : 
+                    new Date().toLocaleDateString('pt-BR');
+                
+                currentCertificateData = {
+                    userName: userData.name || 'Usuário',
+                    courseName: course.cursoNome || 'Curso',
+                    score: course.pontuacao,
+                    date: formattedDate
+                };
+                
+                const certificadoHTML = `
+                    <div class="certificado-container">
+                        <div class="certificado-header">
+                            <h2>Formação Sem Barreiras</h2>
+                            <p>Certificado de Conclusão</p>
+                        </div>
+                        <div class="certificado-body">
+                            <h1 class="certificado-titulo">CERTIFICADO</h1>
+                            <p class="certificado-texto">Certificamos que</p>
+                            <h2 class="certificado-nome">${currentCertificateData.userName}</h2>
+                            <p class="certificado-texto">concluiu com êxito o curso</p>
+                            <h3 class="certificado-curso">${currentCertificateData.courseName}</h3>
+                            <p class="certificado-texto">com pontuação de <strong>${currentCertificateData.score}%</strong></p>
+                            <p class="certificado-data">Concluído em: ${formattedDate}</p>
+                            <div class="certificado-assinatura">
+                                <div style="margin-bottom: 10px;">
+                                    <img src="img/assinatura.png" alt="Assinatura" style="max-width: 200px; max-height: 80px;">
+                                </div>
+                                <p>_________________________</p>
+                                <p>Maria Clara</p>
+                                <p>Diretora Administrativa - Formação Sem Barreiras</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.getElementById('certificadoConteudo').innerHTML = certificadoHTML;
+                showCertificadoModal();
+                
+            } catch (error) {
+                console.error('Erro ao carregar certificado:', error);
+                alert('Erro ao carregar certificado.');
+            }
+        }
+
+        // Função para baixar certificado como PDF
+        function downloadCertificate() {
+            if (!currentCertificateData) return;
+            
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('landscape', 'mm', 'a4');
+            
+            // Adicionar html2canvas para capturar a assinatura
+            const certificadoElement = document.getElementById('certificadoConteudo');
+            
+            html2canvas(certificadoElement, {
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                allowTaint: true,
+                backgroundColor: null
+            }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const imgWidth = 297; // A4 width in mm
+                const imgHeight = canvas.height * imgWidth / canvas.width;
+                
+                doc.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+                doc.save(`Certificado_${currentCertificateData.userName.replace(/\s+/g, '_')}.pdf`);
+            }).catch(error => {
+                console.error('Erro ao gerar PDF com html2canvas:', error);
+                // Fallback: gerar PDF básico se html2canvas falhar
+                generateBasicPDF(doc);
+            });
+        }
+
+        // Função fallback para gerar PDF básico
+        function generateBasicPDF(doc) {
+            // Fundo
+            doc.setFillColor(26, 52, 89);
+            doc.rect(0, 0, 297, 210, 'F');
+            
+            // Borda interna
+            doc.setDrawColor(255, 255, 255);
+            doc.setLineWidth(2);
+            doc.rect(10, 10, 277, 190);
+            
+            // Logo/Header
+            doc.setFontSize(24);
+            doc.setTextColor(255, 255, 255);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Formação Sem Barreiras', 148.5, 30, { align: 'center' });
+            
+            doc.setFontSize(18);
+            doc.text('Certificado de Conclusão', 148.5, 40, { align: 'center' });
+            
+            // Conteúdo principal
+            doc.setFontSize(32);
+            doc.setTextColor(255, 209, 16);
+            doc.text('CERTIFICADO', 148.5, 70, { align: 'center' });
+            
+            doc.setFontSize(16);
+            doc.setTextColor(255, 255, 255);
+            doc.text('Certificamos que', 148.5, 90, { align: 'center' });
+            
+            doc.setFontSize(28);
+            doc.setTextColor(64, 164, 192);
+            doc.text(currentCertificateData.userName, 148.5, 110, { align: 'center' });
+            
+            doc.setFontSize(16);
+            doc.setTextColor(255, 255, 255);
+            doc.text('concluiu com êxito o curso', 148.5, 125, { align: 'center' });
+            
+            doc.setFontSize(22);
+            doc.setTextColor(255, 209, 16);
+            doc.text(currentCertificateData.courseName, 148.5, 140, { align: 'center' });
+            
+            doc.setFontSize(16);
+            doc.setTextColor(255, 255, 255);
+            doc.text(`com pontuação de ${currentCertificateData.score}%`, 148.5, 155, { align: 'center' });
+            
+            doc.text(`Concluído em: ${currentCertificateData.date}`, 148.5, 165, { align: 'center' });
+            
+            // Carregar e adicionar a imagem da assinatura
+            loadSignatureImage().then(signatureData => {
+                if (signatureData) {
+                    // Adicionar a imagem da assinatura
+                    doc.addImage(signatureData, 'PNG', 100, 175, 40, 15);
+                    
+                    // Adicionar texto da assinatura
+                    doc.setFontSize(14);
+                    doc.setTextColor(255, 255, 255);
+                    doc.text('_________________________', 100, 195);
+                    doc.text('Maria Clara', 100, 205);
+                    doc.text('Diretora Administrativa - Formação Sem Barreiras', 100, 210);
+                } else {
+                    // Se não conseguir carregar a imagem, mostrar apenas o texto
+                    doc.setFontSize(14);
+                    doc.text('_________________________', 100, 180);
+                    doc.text('Maria Clara', 100, 190);
+                    doc.text('Diretora Administrativa - Formação Sem Barreiras', 100, 195);
+                }
+                
+                // Salvar PDF
+                doc.save(`Certificado_${currentCertificateData.userName.replace(/\s+/g, '_')}.pdf`);
+            }).catch(error => {
+                console.error('Erro ao carregar imagem da assinatura:', error);
+                // Fallback: mostrar apenas texto
+                doc.setFontSize(14);
+                doc.text('_________________________', 100, 180);
+                doc.text('Maria Clara', 100, 190);
+                doc.text('Diretora Administrativa - Formação Sem Barreiras', 100, 195);
+                
+                // Salvar PDF
+                doc.save(`Certificado_${currentCertificateData.userName.replace(/\s+/g, '_')}.pdf`);
+            });
+        }
+
+        // Função para carregar a imagem da assinatura como base64
+        function loadSignatureImage() {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = 'Anonymous'; // Para permitir carregamento de diferentes origens
+                img.src = 'img/assinatura.png';
+                
+                img.onload = function() {
+                    try {
+                        // Criar canvas para converter a imagem em base64
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        
+                        // Definir dimensões do canvas
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        
+                        // Desenhar imagem no canvas
+                        ctx.drawImage(img, 0, 0);
+                        
+                        // Converter para base64
+                        const dataURL = canvas.toDataURL('image/png');
+                        resolve(dataURL);
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
+                
+                img.onerror = function() {
+                    // Tentar carregar de forma alternativa se a primeira falhar
+                    console.warn('Não foi possível carregar a imagem da assinatura, tentando método alternativo...');
+                    
+                    // Método alternativo usando fetch
+                    fetch('img/assinatura.png')
+                        .then(response => {
+                            if (!response.ok) throw new Error('Erro ao carregar imagem');
+                            return response.blob();
+                        })
+                        .then(blob => {
+                            return new Promise((resolveFetch, rejectFetch) => {
+                                const reader = new FileReader();
+                                reader.onloadend = function() {
+                                    resolveFetch(reader.result);
+                                };
+                                reader.onerror = rejectFetch;
+                                reader.readAsDataURL(blob);
+                            });
+                        })
+                        .then(dataURL => resolve(dataURL))
+                        .catch(error => {
+                            console.error('Erro no método alternativo:', error);
+                            reject(error);
+                        });
+                };
+                
+                // Timeout para evitar que fique travado
+                setTimeout(() => {
+                    reject(new Error('Timeout ao carregar imagem da assinatura'));
+                }, 5000);
+            });
+        }
+
+        // Função para gerar certificado de simulação
+        function gerarCertificadoSimulacao(simulacaoId) {
+            db.collection('resultadoSimulacao').doc(simulacaoId).get()
+                .then((doc) => {
+                    if (!doc.exists) return;
+                    
+                    const simulacao = doc.data();
+                    const userDoc = db.collection('users').doc(currentUser.uid).get();
+                    
+                    Promise.all([userDoc]).then(([userSnapshot]) => {
+                        const userData = userSnapshot.exists ? userSnapshot.data() : {};
+                        
+                        const userName = userData.name || simulacao.userName || 'Usuário';
+                        const score = Math.round(simulacao.pontuacao);
+                        const data = simulacao.data ? 
+                            new Date(simulacao.data.toDate()).toLocaleDateString('pt-BR') : 
+                            new Date().toLocaleDateString('pt-BR');
+                        
+                        // Atualizar dados para download
+                        currentCertificateData = {
+                            userName: userName,
+                            courseName: 'Simulação de Entrevista',
+                            score: score,
+                            date: data
+                        };
+                        
+                        const certificadoHTML = `
+                            <div class="certificado-container">
+                                <div class="certificado-header">
+                                    <h2>Formação Sem Barreiras</h2>
+                                    <p>Certificado de Simulação</p>
+                                </div>
+                                <div class="certificado-body">
+                                    <h1 class="certificado-titulo">CERTIFICADO</h1>
+                                    <p class="certificado-texto">Certificamos que</p>
+                                    <h2 class="certificado-nome">${userName}</h2>
+                                    <p class="certificado-texto">concluiu com êxito a simulação de entrevista</p>
+                                    <h3 class="certificado-curso">Simulação de Entrevista</h3>
+                                    <p class="certificado-texto">com pontuação de <strong>${score}%</strong></p>
+                                    <p class="certificado-data">Concluído em: ${data}</p>
+                                    <div class="certificado-assinatura">
+                                        <div style="margin-bottom: 10px;">
+                                            <img src="img/assinatura.png" alt="Assinatura" style="max-width: 200px; max-height: 80px;">
+                                        </div>
+                                        <p>_________________________</p>
+                                        <p>Maria Clara</p>
+                                        <p>Diretora Administrativa - Formação Sem Barreiras</p>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        
+                        document.getElementById('certificadoConteudo').innerHTML = certificadoHTML;
+                        showCertificadoModal();
+                    });
+                })
+                .catch((error) => {
+                    console.error('Erro ao gerar certificado:', error);
+                    alert('Erro ao gerar certificado.');
+                });
+        }
+
+        // Função para carregar estatísticas das simulações
+        async function carregarEstatisticasSimulacoes() {
+            if (!currentUser) return;
+
+            try {
+                let simSnap;
+                try {
+                    simSnap = await db.collection('resultadoSimulacao')
+                        .where('userId', '==', currentUser.uid)
+                        .get();
+                } catch (error) {
+                    console.warn('Erro ao carregar estatísticas de simulações:', error);
+                    simSnap = { size: 0, forEach: () => {} };
+                }
+                
+                const totalSimulacoes = simSnap.size;
+                let somaPontuacoes = 0;
+                let aprovacoesSim = 0;
+                let melhorPontuacao = 0;
+
+                simSnap.forEach(doc => {
+                    const data = doc.data();
+                    const pontuacao = data.pontuacao || 0;
+                    
+                    somaPontuacoes += pontuacao;
+                    
+                    if (pontuacao >= 70) {
+                        aprovacoesSim++;
+                    }
+                    
+                    if (pontuacao > melhorPontuacao) {
+                        melhorPontuacao = pontuacao;
+                    }
+                });
+
+                const mediaSimulacoes = totalSimulacoes > 0 ? Math.round(somaPontuacoes / totalSimulacoes) : 0;
+
+                // Atualizar estatísticas na página
+                document.getElementById('totalItens').textContent = totalSimulacoes;
+                document.getElementById('mediaPontuacao').textContent = `${mediaSimulacoes}%`;
+                document.getElementById('aprovacoes').textContent = aprovacoesSim;
+                document.getElementById('melhorPontuacao').textContent = `${Math.round(melhorPontuacao)}%`;
+
+            } catch (error) {
+                console.error('Erro ao carregar estatísticas das simulações:', error);
+            }
+        }
+
+        // Função para carregar estatísticas dos cursos
+        async function carregarEstatisticasCursos() {
+            if (!currentUser) return;
+
+            try {
+                let cursosSnap;
+                try {
+                    cursosSnap = await db.collection('resultadoCurso')
+                        .where('userId', '==', currentUser.uid)
+                        .where('concluido', '==', true)
+                        .get();
+                } catch (error) {
+                    console.warn('Erro ao carregar estatísticas de cursos:', error);
+                    // Tenta sem o filtro de concluido se falhar
+                    try {
+                        cursosSnap = await db.collection('resultadoCurso')
+                            .where('userId', '==', currentUser.uid)
+                            .get();
+                    } catch (error2) {
+                        console.warn('Erro ao carregar todos os cursos:', error2);
+                        cursosSnap = { size: 0, forEach: () => {} };
+                    }
+                }
+                
+                const cursosConcluidos = cursosSnap.size;
+                let somaPontuacoes = 0;
+                let aprovacoesCurso = 0;
+                let melhorPontuacao = 0;
+                let cursosFiltrados = 0;
+
+                cursosSnap.forEach(doc => {
+                    const curso = doc.data();
+                    // Filtra cursos concluídos localmente se a consulta falhou
+                    if (curso.concluido || cursosSnap.size === 0) {
+                        const pontuacao = curso.pontuacao || 0;
+                        
+                        somaPontuacoes += pontuacao;
+                        cursosFiltrados++;
+                        
+                        if (pontuacao >= 70) {
+                            aprovacoesCurso++;
+                        }
+                        
+                        if (pontuacao > melhorPontuacao) {
+                            melhorPontuacao = pontuacao;
+                        }
+                    }
+                });
+
+                const mediaCursos = cursosFiltrados > 0 ? Math.round(somaPontuacoes / cursosFiltrados) : 0;
+
+                // Atualizar estatísticas na página
+                document.getElementById('totalItens').textContent = cursosFiltrados;
+                document.getElementById('mediaPontuacao').textContent = `${mediaCursos}%`;
+                document.getElementById('aprovacoes').textContent = aprovacoesCurso;
+                document.getElementById('melhorPontuacao').textContent = `${Math.round(melhorPontuacao)}%`;
+
+            } catch (error) {
+                console.error('Erro ao carregar estatísticas dos cursos:', error);
+            }
+        }
+
+        // Verificar autenticação ao carregar a página
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                currentUser = user;
+                updateUIAfterLogin();
+            } else {
+                currentUser = null;
+                updateUIAfterLogout();
+            }
+        });
+
+        // Funções de acessibilidade (mantidas do código original)
+        document.addEventListener('DOMContentLoaded', function() {
+            const botaoAcessibilidade = document.getElementById('botao-acessibilidade');
+            const menuAcessibilidade = document.getElementById('menu-acessibilidade-sidebar');
+            const fecharMenuBtn = document.getElementById('fechar-menu-acessibilidade');
+            
+            if (botaoAcessibilidade) {
+                botaoAcessibilidade.addEventListener('click', function() {
+                    menuAcessibilidade.classList.toggle('acessibilidade-fechado');
+                    menuAcessibilidade.classList.toggle('acessibilidade-aberto');
+                });
+            }
+            
+            if (fecharMenuBtn) {
+                fecharMenuBtn.addEventListener('click', function() {
+                    menuAcessibilidade.classList.add('acessibilidade-fechado');
+                    menuAcessibilidade.classList.remove('acessibilidade-aberto');
+                });
+            }
+            
+            // Configurar opções de acessibilidade
+            document.querySelectorAll('.acessibilidade-opcao').forEach(botao => {
+                botao.addEventListener('click', function() {
+                    const acao = this.getAttribute('data-acao');
+                    aplicarAcessibilidade(acao);
+                });
+            });
+            
+            // Inicializa o widget do VLibras
+            if (typeof VLibras !== 'undefined') {
+                new window.VLibras.Widget('https://vlibras.gov.br/app');
+            }
+        });
+
+        function aplicarAcessibilidade(acao) {
+            const body = document.getElementById('body-principal');
+            
+            // Resetar todas as classes primeiro
+            body.classList.remove(
+                'ajuste-fonte-1', 'ajuste-fonte-2', 'ajuste-fonte-3',
+                'ajuste-espaco-1', 'ajuste-espaco-2', 'ajuste-espaco-3',
+                'fonte-legivel', 'alto-contraste-escuro', 'inverter-cores',
+                'protanopia', 'deuteranopia', 'destacar-links', 'destacar-cabecalhos'
+            );
+            
+            switch(acao) {
+                case 'aumentar-fonte':
+                    body.classList.add('ajuste-fonte-2');
+                    break;
+                case 'diminuir-fonte':
+                    body.classList.add('ajuste-fonte-1');
+                    break;
+                case 'fonte-legivel':
+                    body.classList.add('fonte-legivel');
+                    break;
+                case 'espacamento-texto':
+                    body.classList.add('ajuste-espaco-2');
+                    break;
+                case 'alto-contraste-escuro':
+                    body.classList.add('alto-contraste-escuro');
+                    break;
+                case 'inverter-cores':
+                    body.classList.add('inverter-cores');
+                    break;
+                case 'protanopia':
+                    body.classList.add('protanopia');
+                    break;
+                case 'deuteranopia':
+                    body.classList.add('deuteranopia');
+                    break;
+                case 'destacar-links':
+                    body.classList.add('destacar-links');
+                    break;
+                case 'destacar-cabecalhos':
+                    body.classList.add('destacar-cabecalhos');
+                    break;
+                case 'guia-leitura':
+                    // Implementar guia de leitura
+                    break;
+                case 'linhas-leitura':
+                    // Implementar linhas de leitura
+                    break;
+                case 'reset':
+                    // Já resetamos acima, só garantir
+                    break;
+            }
+            
+            // Atualizar estado dos botões
+            document.querySelectorAll('.acessibilidade-opcao').forEach(botao => {
+                botao.classList.remove('ativo');
+                if (botao.getAttribute('data-acao') === acao) {
+                    botao.classList.add('ativo');
+                }
+            });
+        }
+    </script>
+</body>
+</html>

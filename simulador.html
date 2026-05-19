@@ -1,0 +1,2157 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Simulado Entrevista - Formação Sem Barreiras</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <!-- Ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- VLibras -->
+    <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+    <!-- jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            width: 100vw;
+            overflow-x: hidden;
+            font-size: 100%;
+        }
+        
+        /* ===== CABEÇALHO PADRONIZADO ===== */
+        .cabecalho {
+            background: linear-gradient(135deg, #1a3459, #40a4c0);
+            color: white;
+            padding: 1rem 0;
+            width: 100%;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: relative;
+            z-index: 1000;
+        }
+
+        .cabecalho-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            flex-wrap: nowrap;
+        }
+
+        .logo-area {
+            flex: 0 0 auto;
+            min-width: 200px;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+            white-space: nowrap;
+            display: inline-block;
+        }
+
+        .logo:hover {
+            opacity: 0.9;
+        }
+
+        .menu-principal {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            margin: 0 1rem;
+            min-width: 0;
+        }
+
+        .menu-principal ul {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            flex-wrap: nowrap;
+            justify-content: center;
+            gap: 0.5rem;
+            max-width: 100%;
+            overflow: hidden;
+        }
+
+        .menu-principal li {
+            flex: 0 0 auto;
+            margin: 0;
+        }
+
+        .menu-link {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 0.8rem;
+            border-radius: 4px;
+            transition: all 0.3s;
+            font-weight: 500;
+            white-space: nowrap;
+            display: inline-block;
+            font-size: 0.95rem;
+        }
+
+        .menu-link:hover, .menu-link.ativo {
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .user-actions {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            min-width: 180px;
+            justify-content: flex-end;
+        }
+
+        .user-menu {
+            display: none;
+            align-items: center;
+            gap: 0.8rem;
+            flex-wrap: nowrap;
+        }
+
+        .user-info {
+            color: white;
+            font-weight: 500;
+            white-space: nowrap;
+            font-size: 0.9rem;
+        }
+
+        .botao-sair {
+            background-color: #EA4335;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s;
+            white-space: nowrap;
+            font-size: 0.9rem;
+        }
+
+        .botao-sair:hover {
+            background-color: #d33426;
+        }
+
+        .botao-login {
+            background-color: #d1a10f;
+            color: #1a3459;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+            font-size: 0.9rem;
+        }
+
+        .botao-login:hover {
+            background-color: #e0b433;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .icone-login {
+            font-size: 1rem;
+        }
+
+        .admin-item {
+            display: none !important;
+        }
+
+        .admin-item.mostrar {
+            display: list-item !important;
+        }
+
+        @media (max-width: 1100px) {
+            .menu-link {
+                padding: 0.5rem 0.6rem;
+                font-size: 0.9rem;
+            }
+            
+            .logo {
+                font-size: 1.6rem;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .cabecalho-container {
+                flex-direction: column;
+                gap: 1rem;
+                flex-wrap: wrap;
+            }
+            
+            .menu-principal {
+                margin: 1rem 0;
+                order: 3;
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .menu-principal ul {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 0.3rem;
+            }
+            
+            .logo-area {
+                order: 1;
+                min-width: auto;
+            }
+            
+            .user-actions {
+                order: 2;
+                min-width: auto;
+                justify-content: center;
+            }
+            
+            .menu-link {
+                padding: 0.4rem 0.6rem;
+                font-size: 0.85rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .menu-principal ul {
+                flex-wrap: wrap;
+            }
+            
+            .menu-principal li {
+                margin: 0.2rem;
+            }
+            
+            .menu-link {
+                padding: 0.4rem 0.5rem;
+                font-size: 0.85rem;
+            }
+            
+            .logo {
+                font-size: 1.4rem;
+            }
+            
+            .botao-login, .botao-sair {
+                padding: 0.5rem 0.8rem;
+                font-size: 0.85rem;
+            }
+            
+            .user-info {
+                font-size: 0.85rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .menu-principal ul {
+                justify-content: space-around;
+                gap: 0.2rem;
+            }
+            
+            .menu-link {
+                padding: 0.3rem 0.4rem;
+                font-size: 0.8rem;
+            }
+            
+            .user-info {
+                display: none;
+            }
+            
+            .botao-login span.icone-login {
+                display: none;
+            }
+        }
+
+        /* Área principal do simulado */
+        .cursos-area {
+            padding: 20px;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Título H1 maior e alinhado à esquerda */
+        .titulo-destaque {
+            margin-bottom: 2rem;
+            padding: 0;
+            text-align: left;
+        }
+
+        .titulo-destaque h2 {
+            color: #1a3459;
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* Container principal padronizado */
+        .container-principal {
+            width: 100%;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        
+        .caixa-conteudo {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            width: 100%;
+        }
+        
+        /* Tela inicial com instruções */
+        #telaInicial {
+            width: 100%;
+            padding: 0;
+        }
+        
+        /* Opções de resposta com layout da página base */
+        .options-form {
+            margin-bottom: 30px;
+        }
+
+        .option {
+            margin-bottom: 12px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .option-label {
+            display: flex;
+            align-items: center;
+            background-color: #fff;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px 20px;
+            font-size: 1em;
+            font-weight: 400;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .option-label:hover {
+            background-color: #f5f5f5;
+            border-color: #40a4c0;
+        }
+
+        .radio-input:checked + .option-label {
+            background-color: #e3f2fd;
+            border-color: #40a4c0;
+            box-shadow: 0 0 0 3px rgba(64, 164, 192, 0.1);
+        }
+
+        .option-letter {
+            background-color: #e0e0e0;
+            color: #666;
+            min-width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 600;
+            font-size: 0.9em;
+            margin-right: 15px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .radio-input:checked + .option-label .option-letter {
+            background-color: #40a4c0;
+            color: #fff;
+        }
+
+        .radio-input {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+            margin: 0;
+        }
+        
+        /* Feedback */
+        .feedback-resposta {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .feedback-correto {
+            background-color: #e8f5e8;
+            color: #155724;
+            border-left: 4px solid #34A853;
+        }
+        
+        .feedback-incorreto {
+            background-color: #fde8e8;
+            color: #721c24;
+            border-left: 4px solid #EA4335;
+        }
+        
+        /* Progresso do simulado */
+        .progresso-simulado {
+            background: #f0f4f7;
+            border-radius: 10px;
+            padding: 5px;
+            margin: 20px 0;
+            width: 100%;
+        }
+        
+        .barra-progresso {
+            height: 8px;
+            background: #40a4c0;
+            border-radius: 5px;
+            transition: width 0.3s ease;
+        }
+        
+        .contador-perguntas {
+            text-align: left;
+            color: #1a3459;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        /* Card de pergunta */
+        .card {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            width: 100%;
+        }
+        
+        .question-text {
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-bottom: 25px;
+            color: #1a3459;
+            line-height: 1.4;
+            text-align: left;
+        }
+        
+        /* Navegação - BOTÕES DISTRIBUÍDOS COMO NA PÁGINA BASE */
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            margin-top: 20px;
+        }
+        
+        /* BOTÕES PADRONIZADOS */
+        .botao-padrao {
+            background-color: #40a4c0;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 500;
+            text-decoration: none;
+        }
+        
+        .botao-padrao:hover {
+            background-color: #1a3459;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .botao-sucesso {
+            background-color: #34A853;
+        }
+        
+        .botao-sucesso:hover {
+            background-color: #2e9749;
+        }
+        
+        .botao-aviso {
+            background-color: #FBBC05;
+            color: #333;
+        }
+        
+        .botao-aviso:hover {
+            background-color: #e0a800;
+        }
+        
+        .botao-simulado-grande {
+            background-color: #40a4c0;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 1rem;
+        }
+        
+        .botao-simulado-grande:hover {
+            background-color: #1a3459;
+        }
+        
+        /* Layout da tela inicial - ALINHADO À ESQUERDA */
+        .instrucoes-container {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .descricao-simulado {
+            text-align: left;
+            margin-bottom: 1rem;
+        }
+        
+        .descricao-simulado h3 {
+            color: #1a3459;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .descricao-simulado p {
+            color: #666;
+            line-height: 1.6;
+            font-size: 1.05rem;
+            max-width: 800px;
+        }
+        
+        .como-funciona-box {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 8px;
+            text-align: left;
+            width: 100%;
+            max-width: 600px;
+            border-left: 4px solid #40a4c0;
+            margin: 0;
+        }
+        
+        .como-funciona-box h4 {
+            color: #1a3459;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .como-funciona-box ul {
+            color: #666;
+            line-height: 1.8;
+            padding-left: 1.5rem;
+        }
+        
+        .como-funciona-box li {
+            margin-bottom: 0.5rem;
+            position: relative;
+        }
+        
+        .como-funciona-box li:before {
+            content: "•";
+            color: #40a4c0;
+            font-weight: bold;
+            position: absolute;
+            left: -1rem;
+        }
+
+        /* Footer - Padronizado */
+        .rodape {
+            background: linear-gradient(135deg, #1a3459, #40a4c0);
+            color: white;
+            padding: 3rem 0 2rem;
+            width: 100%;
+        }
+
+        .rodape-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .rodape-coluna h3, .rodape-coluna h4 {
+            margin-bottom: 1rem;
+        }
+
+        .rodape-coluna ul {
+            list-style: none;
+        }
+
+        .rodape-coluna li {
+            margin-bottom: 0.5rem;
+        }
+
+        .rodape-coluna a {
+            color: white;
+            text-decoration: none;
+            transition: opacity 0.3s;
+        }
+
+        .rodape-coluna a:hover {
+            opacity: 0.8;
+        }
+
+        .rodape-social .social-icones {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .rodape-social img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+
+        .rodape-social img:hover {
+            transform: scale(1.1);
+        }
+
+        /* Botão de Acessibilidade */
+        #botao-acessibilidade {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background-color: #40a4c0;
+            color: #ffffff;
+            border: none;
+            border-radius: 50%;
+            font-size: 2em;
+            font-weight: bold;
+            line-height: 1;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            z-index: 2000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        #botao-acessibilidade:hover {
+            background-color: #5bbbd9;
+            transform: scale(1.05);
+        }
+
+        /* Menu de Acessibilidade */
+        #menu-acessibilidade-sidebar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 300px;
+            height: 100%;
+            background-color: #f0f4f7;
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+            z-index: 2001;
+            transition: transform 0.4s ease;
+            overflow-y: auto;
+        }
+        
+        .acessibilidade-fechado {
+            transform: translateX(100%);
+        }
+        
+        .acessibilidade-aberto {
+            transform: translateX(0);
+        }
+        
+        .acessibilidade-header {
+            background-color: #1a3459;
+            color: #ffffff;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .acessibilidade-header h3 {
+            margin: 0;
+            font-size: 1.3em;
+        }
+        
+        #fechar-menu-acessibilidade {
+            background: none;
+            border: 1px solid #ffffff;
+            color: #ffffff;
+            font-size: 1.1em;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        
+        #fechar-menu-acessibilidade:hover {
+            background-color: #40a4c0;
+            border-color: #40a4c0;
+        }
+        
+        .acessibilidade-opcoes-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            padding: 20px;
+        }
+        
+        .grid-section-title {
+            grid-column: span 2;
+            background-color: #e3f2fd;
+            color: #1a3459;
+            padding: 8px 15px;
+            margin-top: 15px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            font-size: 1.1em;
+            font-weight: 700;
+            text-align: center;
+        }
+        
+        .acessibilidade-opcao {
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            color: #1a3459;
+            padding: 15px 10px;
+            font-size: 0.9em;
+            font-weight: 600;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            line-height: 1.2;
+            min-height: 75px;
+        }
+        
+        .acessibilidade-opcao:hover {
+            background-color: #e3f2fd;
+            border-color: #40a4c0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .acessibilidade-opcao.ativo {
+            background-color: #40a4c0;
+            color: #ffffff;
+            border-color: #1a3459;
+        }
+        
+        .icone-acao {
+            font-size: 1.8em;
+            display: block;
+            margin-bottom: 5px;
+            color: #40a4c0;
+            font-weight: bold;
+        }
+        
+        .acessibilidade-opcao.ativo .icone-acao {
+            color: #ffffff;
+        }
+        
+        .reset-button {
+            grid-column: span 2;
+            background-color: #d1a10f;
+            color: #1a3459;
+        }
+        
+        .reset-button:hover {
+            background-color: #e0b433;
+            border-color: #1a3459;
+            color: #1a3459;
+        }
+        
+        .reset-button.ativo {
+            background-color: #d1a10f;
+            color: #1a3459;
+        }
+
+        /* Guia de Leitura */
+        #guia-leitura-barra {
+            position: fixed;
+            height: 40px;
+            width: 100%;
+            background-color: rgba(255, 255, 0, 0.4);
+            pointer-events: none;
+            z-index: 9999;
+            top: -100px;
+            transition: none;
+        }
+
+        /* Estilos para Acessibilidade */
+        .ajuste-fonte-1 { font-size: 110% !important; }
+        .ajuste-fonte-2 { font-size: 125% !important; }
+        .ajuste-fonte-3 { font-size: 150% !important; }
+        
+        .ajuste-espaco-1 { letter-spacing: 1px !important; }
+        .ajuste-espaco-2 { letter-spacing: 2px !important; }
+        .ajuste-espaco-3 { letter-spacing: 3px !important; }
+        
+        .fonte-legivel { font-family: Arial, sans-serif !important; }
+        
+        .alto-contraste-escuro {
+            background-color: #000000 !important;
+            color: #ffffff !important;
+        }
+        
+        .alto-contraste-escuro * {
+            background-color: #000000 !important;
+            color: #ffffff !important;
+            border-color: #ffffff !important;
+        }
+        
+        .inverter-cores {
+            filter: invert(1) hue-rotate(180deg);
+        }
+        
+        .protanopia {
+            filter: url('#protanopia-filter');
+        }
+        
+        .deuteranopia {
+            filter: url('#deuteranopia-filter');
+        }
+        
+        .destacar-links a {
+            background-color: yellow !important;
+            color: #000000 !important;
+            padding: 2px 4px !important;
+            border-radius: 3px !important;
+        }
+        
+        .destacar-cabecalhos h1, 
+        .destacar-cabecalhos h2, 
+        .destacar-cabecalhos h3, 
+        .destacar-cabecalhos h4, 
+        .destacar-cabecalhos h5, 
+        .destacar-cabecalhos h6 {
+            background-color: #ffff00 !important;
+            color: #000000 !important;
+            padding: 5px 10px !important;
+            border-radius: 5px !important;
+        }
+        
+        .em-foco {
+            background-color: rgba(255, 255, 0, 0.3) !important;
+            outline: 2px solid #000000 !important;
+        }
+
+        /* Estilos da Tela de Resultados */
+        .pontuacao-grande {
+            font-size: 4rem;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        
+        .aprovado {
+            color: #34A853;
+        }
+        
+        .reprovado {
+            color: #EA4335;
+        }
+
+        .results-card {
+            text-align: left;
+            padding: 30px !important;
+        }
+
+        /* Área de resultados - TEXTO ALINHADO À ESQUERDA */
+        .resultado-final {
+            text-align: left;
+            width: 100%;
+        }
+        
+        .resultado-final h3 {
+            text-align: left;
+            margin-bottom: 25px;
+        }
+        
+        .resultado-final p {
+            text-align: left;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        
+        .resultado-final ul {
+            text-align: left;
+            padding-left: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .resultado-final li {
+            text-align: left;
+            margin-bottom: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .cursos-area {
+                padding: 15px;
+            }
+            
+            .caixa-conteudo {
+                padding: 25px;
+            }
+            
+            .card-footer {
+                flex-direction: column;
+                gap: 10px;
+                align-items: stretch;
+            }
+            
+            .card-footer > * {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .como-funciona-box {
+                padding: 20px;
+            }
+            
+            .titulo-destaque h2 {
+                font-size: 2rem;
+            }
+        }
+        
+        @media (min-width: 1200px) {
+            .cursos-area {
+                max-width: 1100px;
+            }
+            
+            .container-principal {
+                max-width: 1100px;
+            }
+        }
+        
+        /* Menu item para admin - sempre em linha */
+        .menu-item-logged {
+            display: none;
+        }
+        
+        /* Status do simulado */
+        .simulado-status {
+            background: #e3f2fd;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #40a4c0;
+        }
+        
+        .simulado-status p {
+            margin: 5px 0;
+            color: #1a3459;
+            font-size: 0.9rem;
+            text-align: left;
+        }
+    </style>
+</head>
+<body id="body-principal">
+    
+    <!-- CABEÇALHO PADRONIZADO -->
+    <header class="cabecalho">
+        <div class="cabecalho-container">
+            <!-- Logo - sempre em linha única -->
+            <div class="logo-area">
+                <a href="index.html" class="logo">Formação Sem Barreiras</a>
+            </div>
+            
+            <!-- Menu de navegação compacto -->
+            <nav class="menu-principal">
+                <ul>
+                    <li><a href="index.html" class="menu-link">Home</a></li>
+                    <li class="menu-item-logged"><a href="cursos.html" class="menu-link">Cursos</a></li>
+                    <li class="menu-item-logged"><a href="simulador.html" class="menu-link ativo">Simulação</a></li>
+                    <li class="menu-item-logged"><a href="jogos.html" class="menu-link">Jogo</a></li>
+                    <li class="menu-item-logged"><a href="historico.html" class="menu-link">Histórico</a></li>
+                    <!-- Link Admin (só aparece para administradores) -->
+                    <li class="menu-item-logged admin-item" style="display: none;">
+                        <a href="admin.html" class="menu-link">Admin</a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <!-- Área do usuário compacta -->
+            <div class="user-actions">
+                <div class="user-menu" id="userMenu">
+                    <span class="user-info" id="userName">Olá, Usuário!</span>
+                    <button class="botao-sair" onclick="logout()">Sair</button>
+                </div>
+                <button id="loginBtn" class="botao-login" onclick="showModal('loginModal')">
+                    <span class="icone-login">👤</span> Área do Cliente
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <section class="cursos-area">
+        <div class="titulo-destaque">
+            <h2>SIMULAÇÃO DE ENTREVISTA</h2>
+        </div>
+
+        <!-- Tela Inicial -->
+        <div id="telaInicial">
+            <div class="container-principal">
+                <div class="caixa-conteudo">
+                    <div class="instrucoes-container">
+                        <div class="descricao-simulado">
+                            <h3>Teste Sua Preparação para Entrevistas</h3>
+                            <p>
+                                Este simulado contém as 15 perguntas mais comuns em entrevistas de emprego. 
+                                Responda com honestidade e ao final receba um diagnóstico da sua preparação.
+                            </p>
+                        </div>
+                        
+                        <div class="como-funciona-box">
+                            <h4><i class="fas fa-info-circle"></i> Como Funciona:</h4>
+                            <ul>
+                                <li>15 perguntas de múltipla escolha</li>
+                                <li>Feedback imediato após cada resposta</li>
+                                <li>Resultado final com diagnóstico</li>
+                                <li>Salvamento automático do progresso</li>
+                                <li>Recomendações personalizadas</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div id="statusSimulado" class="simulado-status" style="display: none;">
+                        <!-- Status será carregado aqui -->
+                    </div>
+
+                    <div style="margin-top: 2rem;">
+                        <button class="botao-simulado-grande" onclick="iniciarSimulado()">
+                            <i class="fas fa-play-circle"></i> INICIAR SIMULADO
+                        </button>
+
+                        <div id="continuarSimulado" style="margin-top: 20px; display: none;">
+                            <p style="color: #666; margin-bottom: 10px;">Você tem um simulado em andamento</p>
+                            <button class="botao-padrao botao-sucesso" onclick="continuarSimuladoSalvo()">
+                                <i class="fas fa-redo"></i> CONTINUAR SIMULADO
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tela do Simulado -->
+        <div id="telaSimulado" style="display: none;">
+            <div class="container-principal">
+                <!-- Barra de Progresso -->
+                <div class="progresso-simulado">
+                    <div class="barra-progresso" id="barraProgresso" style="width: 0%"></div>
+                </div>
+                <div class="contador-perguntas" id="contadorPerguntas">
+                    Pergunta 1 de 15
+                </div>
+
+                <!-- Container da pergunta atual -->
+                <div id="question-container"></div>
+            </div>
+        </div>
+
+        <!-- Tela de Resultados -->
+        <div id="telaResultados" style="display: none;">
+            <div class="container-principal">
+                <div class="caixa-conteudo">
+                    <div class="resultado-final">
+                        <h3 style="color: #1a3459; margin-bottom: 20px;">Resultado do Simulado</h3>
+                        
+                        <div id="resultadoConteudo">
+                            <!-- Resultado será carregado aqui -->
+                        </div>
+
+                        <div class="card-footer">
+                            <button class="botao-padrao botao-aviso" onclick="refazerSimulado()">
+                                <i class="fas fa-redo"></i> Refazer Simulado
+                            </button>
+                            <button class="botao-padrao botao-sucesso" onclick="salvarResultado()" id="btnSalvarResultado">
+                                <i class="fas fa-save"></i> Salvar Resultado
+                            </button>
+                            <button class="botao-padrao" onclick="voltarInicio()">
+                                <i class="fas fa-home"></i> Voltar ao Início
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="rodape">
+        <div class="rodape-container">
+            <div class="rodape-coluna rodape-info">
+                <h3>Formação Sem Barreiras</h3>
+                <p>&copy; 2025 Todos os direitos reservados a Gabrielle Rosa.</p>
+            </div>
+            <div class="rodape-coluna">
+                <h4>Links Úteis</h4>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="cursos.html" class="menu-item-logged">Cursos</a></li>
+                    <li><a href="simulador.html" class="menu-item-logged">Simulação entrevista</a></li>
+                    <li><a href="jogos.html" class="menu-item-logged">Jogos</a></li>
+                    <li><a href="historico.html" class="menu-item-logged">Histórico</a></li>
+                </ul>
+            </div>
+            <div class="rodape-coluna rodape-social">
+                <h4>Siga-nos</h4>
+                <div class="social-icones">
+                    <a href="#"><img src="img/instagram.png" alt="Instagram"></a> 
+                    <a href="#"><img src="img/Tiktok_icon.svg.png" alt="TikTok"></a> 
+                    <a href="#"><img src="img/Youtube_logo.png" alt="YouTube"></a> 
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Elementos de Acessibilidade -->
+    <div id="guia-leitura-barra"></div>
+    
+    <!-- Menu de Acessibilidade -->
+    <aside id="menu-acessibilidade-sidebar" class="acessibilidade-fechado">
+        <div class="acessibilidade-header">
+            <h3>Acessibilidade</h3>
+            <button id="fechar-menu-acessibilidade" aria-label="Fechar menu">X</button>
+        </div>
+        
+        <div class="acessibilidade-opcoes-grid">
+            
+            <h4 class="grid-section-title">Leitura e Dislexia</h4>
+            <button class="acessibilidade-opcao" data-acao="aumentar-fonte">
+                <span class="icone-acao">A+</span> Aumentar Fonte
+            </button>
+            <button class="acessibilidade-opcao" data-acao="diminuir-fonte">
+                <span class="icone-acao">A-</span> Diminuir Fonte
+            </button>
+            <button class="acessibilidade-opcao" data-acao="fonte-legivel">
+                <span class="icone-acao">🔤</span> Fonte Legível
+            </button>
+            <button class="acessibilidade-opcao" data-acao="espacamento-texto">
+                <span class="icone-acao">↔️</span> Aumentar Espaço
+            </button>
+
+            <h4 class="grid-section-title">Contraste e Cores</h4>
+            <button class="acessibilidade-opcao" data-acao="alto-contraste-escuro">
+                <span class="icone-acao">🌙</span> Alto Contraste Escuro
+            </button>
+            <button class="acessibilidade-opcao" data-acao="inverter-cores">
+                <span class="icone-acao">🔄</span> Inverter Cores
+            </button>
+            <button class="acessibilidade-opcao" data-acao="protanopia">
+                <span class="icone-acao">🔴</span> Modo Protanopia
+            </button>
+            <button class="acessibilidade-opcao" data-acao="deuteranopia">
+                <span class="icone-acao">🟢</span> Modo Deuteranopia
+            </button>
+
+            <h4 class="grid-section-title">Foco e Navegação</h4>
+            <button class="acessibilidade-opcao" data-acao="destacar-links">
+                <span class="icone-acao">🔗</span> Destacar Links
+            </button>
+            <button class="acessibilidade-opcao" data-acao="destacar-cabecalhos">
+                <span class="icone-acao">H1</span> Destacar Cabeçalhos
+            </button>
+            <button class="acessibilidade-opcao" data-acao="guia-leitura">
+                <span class="icone-acao">💬</span> Guia de Leitura
+            </button>
+             <button class="acessibilidade-opcao" data-acao="linhas-leitura">
+                <span class="icone-acao">🔍</span> Linhas de Leitura
+            </button>
+
+            
+            <button class="acessibilidade-opcao reset-button" data-acao="reset">
+                <span class="icone-acao">🔄</span> **REDEFINIR TUDO**
+            </button>
+        </div>
+    </aside>
+
+    <!-- Botão de Acessibilidade -->
+    <button id="botao-acessibilidade" aria-label="Abrir menu de acessibilidade">♿</button>
+
+    <!-- VLibras Widget -->
+    <div vw class="enabled">
+        <div vw-access-button class="active"></div>
+        <div vw-plugin-wrapper>
+            <div class="vw-plugin-top-wrapper"></div>
+        </div>
+    </div>
+
+    <!-- Filtros SVG para modos de daltonismo -->
+    <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="0" height="0" style="position:absolute">
+        <defs>
+            <!-- Filtro para Protanopia (deficiência para vermelho) -->
+            <filter id="protanopia-filter">
+                <feColorMatrix type="matrix" values="0.567, 0.433, 0, 0, 0
+                                                     0.558, 0.442, 0, 0, 0
+                                                     0, 0.242, 0.758, 0, 0
+                                                     0, 0, 0, 1, 0" />
+            </filter>
+            
+            <!-- Filtro para Deuteranopia (deficiência para verde) -->
+            <filter id="deuteranopia-filter">
+                <feColorMatrix type="matrix" values="0.625, 0.375, 0, 0, 0
+                                                     0.7, 0.3, 0, 0, 0
+                                                     0, 0.3, 0.7, 0, 0
+                                                     0, 0, 0, 1, 0" />
+            </filter>
+        </defs>
+    </svg>
+
+    <script>
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyAcfMe_zFeS7mGJA1UhA65goiP1gOh-vlI",
+            authDomain: "teste-esse-06-12.firebaseapp.com",
+            projectId: "teste-esse-06-12",
+            storageBucket: "teste-esse-06-12.firebasestorage.app",
+            messagingSenderId: "988541369532",
+            appId: "1:988541369532:web:f5ab3bae7bc0279b1064b9",
+            measurementId: "G-Q2WVXT54TX"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        let currentUser = null;
+        let currentQuestionIndex = 0;
+        let respostas = [];
+        let simuladoIniciado = false;
+        let perguntasEmbaralhadas = [];
+        let userName = 'Usuário';
+        let resultadoSalvo = false; // Flag para controlar se o resultado já foi salvo
+        let resultadoId = null; // ID do resultado salvo
+
+        // 15 Principais Perguntas de Entrevista
+        const perguntas = [
+            {
+                pergunta: "Conte-me sobre você.",
+                opcoes: [
+                    "Falo sobre minha vida pessoal e hobbies",
+                    "Faço um resumo profissional destacando experiências relevantes para a vaga",
+                    "Pergunto o que querem saber especificamente",
+                    "Falo apenas sobre minha formação acadêmica"
+                ],
+                correta: 1,
+                feedback: "Correto! Foque em experiências profissionais relevantes para a vaga, mostrando como seu background se alinha com a posição.",
+                dica: "Prepare um pitch de 1-2 minutos conectando sua experiência com os requisitos da vaga."
+            },
+            {
+                pergunta: "Quais são seus pontos fortes?",
+                opcoes: [
+                    "Falo que sou perfeccionista e trabalho demais",
+                    "Listo habilidades técnicas e comportamentais com exemplos concretos",
+                    "Digo que sou bom em tudo",
+                    "Respondo que não tenho pontos fracos"
+                ],
+                correta: 1,
+                feedback: "Correto! Relacione pontos fortes específicos com exemplos que demonstrem essas qualidades.",
+                dica: "Escolha 3-4 pontos fortes relevantes para a vaga e prepare exemplos para cada um."
+            },
+            {
+                pergunta: "Quais são seus pontos fracos?",
+                opcoes: [
+                    "Digo que não tenho pontos fracos",
+                    "Menciono uma qualidade disfarçada de defeito",
+                    "Apresento um ponto fraco real e como estou trabalhando para melhorá-lo",
+                    "Listo vários defeitos pessoais"
+                ],
+                correta: 2,
+                feedback: "Correto! Mostre autoconhecimento e proatividade para desenvolvimento.",
+                dica: "Escolha um ponto fraco não essencial para a vaga e mostre ações concretas de melhoria."
+            },
+            {
+                pergunta: "Por que quer trabalhar nesta empresa?",
+                opcoes: [
+                    "Preciso do salário",
+                    "Gosto da localização",
+                    "Demonstro conhecimento sobre a empresa e como meus valores se alinham",
+                    "Um amigo me indicou"
+                ],
+                correta: 2,
+                feedback: "Correto! Pesquise sobre a empresa e conecte com seus objetivos profissionais.",
+                dica: "Estude a missão, valores e projetos recentes da empresa antes da entrevista."
+            },
+            {
+                pergunta: "Onde você se vê em 5 anos?",
+                opcoes: [
+                    "Na sua posição",
+                    "Em outra empresa",
+                    "Crescendo dentro da empresa, adquirindo novas habilidades",
+                    "Aposentado"
+                ],
+                correta: 2,
+                feedback: "Correto! Mostre ambição realista e interesse em crescer com a empresa.",
+                dica: "Relacione seus objetivos com oportunidades de crescimento na empresa."
+            },
+            {
+                pergunta: "Por que devemos contratar você?",
+                opcoes: [
+                    "Porque preciso do emprego",
+                    "Sou melhor que os outros candidatos",
+                    "Destaco minhas habilidades únicas e como posso agregar valor",
+                    "Não sei, a decisão é sua"
+                ],
+                correta: 2,
+                feedback: "Correto! Destaque seu diferencial e como pode resolver problemas da empresa.",
+                dica: "Prepare um 'elevator pitch' destacando suas principais qualificações."
+            },
+            {
+                pergunta: "Como você lida com pressão e prazos?",
+                opcoes: [
+                    "Trabalho até tarde sem reclamar",
+                    "Entro em pânico",
+                    "Priorizo tarefas, comunico progresso e peço ajuda quando necessário",
+                    "Ignoro os prazos"
+                ],
+                correta: 2,
+                feedback: "Correto! Mostre organização e habilidades de comunicação sob pressão.",
+                dica: "Mencione técnicas específicas como lista de prioridades ou método Pomodoro."
+            },
+            {
+                pergunta: "Você trabalha bem em equipe?",
+                opcoes: [
+                    "Prefiro trabalhar sozinho",
+                    "Sim, sempre",
+                    "Sim, e posso dar exemplos de projetos colaborativos bem-sucedidos",
+                    "Depende da equipe"
+                ],
+                correta: 2,
+                feedback: "Correto! Exemplifique com situações reais de trabalho em equipe.",
+                dica: "Tenha pelo menos 2 exemplos concretos de trabalho em equipe preparados."
+            },
+            {
+                pergunta: "Qual seu salário pretendido?",
+                opcoes: [
+                    "Falo um valor muito baixo",
+                    "Pergunto qual o budget da vaga",
+                    "Apresento uma faixa salarial baseada em pesquisa de mercado",
+                    "Digo que não me importo com o salário"
+                ],
+                correta: 2,
+                feedback: "Correto! Pesquise a média salarial para a posição e experiência.",
+                dica: "Pesquise no Glassdoor e outras fontes antes da entrevista."
+            },
+            {
+                pergunta: "Como você lida com críticas?",
+                opcoes: [
+                    "Fico na defensiva",
+                    "Ignoro",
+                    "Vejo como oportunidade de aprendizado e busco melhorar",
+                    "Critico de volta"
+                ],
+                correta: 2,
+                feedback: "Correto! Demonstre maturidade profissional e vontade de crescer.",
+                dica: "Mostre que você valoriza feedback construtivo."
+            },
+            {
+                pergunta: "Conte sobre um desafio que superou.",
+                opcoes: [
+                    "Falo sobre um problema pessoal",
+                    "Invento uma situação",
+                    "Descrevo um desafio profissional real e como o resolvi",
+                    "Digo que nunca tive desafios"
+                ],
+                correta: 2,
+                feedback: "Correto! Use a técnica STAR (Situação, Tarefa, Ação, Resultado).",
+                dica: "Prepare 3-4 histórias de desafios profissionais usando a estrutura STAR."
+            },
+            {
+                pergunta: "Por que está deixando seu emprego atual?",
+                opcoes: [
+                    "Falo mal da empresa atual",
+                    "Minto sobre os motivos",
+                    "Foco em busca de novos desafios e crescimento profissional",
+                    "Digo que fui demitido"
+                ],
+                correta: 2,
+                feedback: "Correto! Mantenha o tom positivo e focado no futuro.",
+                dica: "Nunca fale mal de empregadores anteriores."
+            },
+            {
+                pergunta: "O que você sabe sobre nossa empresa?",
+                opcoes: [
+                    "Nada",
+                    "Só o básico",
+                    "Demonstro conhecimento sobre produtos, cultura e notícias recentes",
+                    "Visitei o site uma vez"
+                ],
+                correta: 2,
+                feedback: "Correto! Pesquisa prévia mostra interesse genuíno.",
+                dica: "Pesquise site, redes sociais e notícias recentes da empresa."
+            },
+            {
+                pergunta: "Como você toma decisões difíceis?",
+                opcoes: [
+                    "Sigo minha intuição",
+                    "Peço para outros decidirem",
+                    "Analiso dados, considero alternativas e consulto a equipe quando apropriado",
+                    "Adio a decisão"
+                ],
+                correta: 2,
+                feedback: "Correto! Mostre processo estruturado de tomada de decisão.",
+                dica: "Mencione análise de prós/contras e consulta a especialistas quando necessário."
+            },
+            {
+                pergunta: "Você tem perguntas para nós?",
+                opcoes: [
+                    "Pergunto sobre salário e benefícios primeiro",
+                    "Digo que não tenho perguntas",
+                    "Faço perguntas inteligentes sobre a empresa e a posição",
+                    "Pergunto sobre horário de almoço"
+                ],
+                correta: 2,
+                feedback: "Correto! Perguntas mostram interesse e preparação.",
+                dica: "Prepare 3-5 perguntas sobre cultura, desafios da posição e expectativas."
+            }
+        ];
+
+        // Preparar perguntas com opções embaralhadas
+        function prepararPerguntasEmbaralhadas() {
+            return perguntas.map(pergunta => {
+                const indices = [0, 1, 2, 3];
+                const indicesEmbaralhados = [...indices].sort(() => Math.random() - 0.5);
+                
+                const opcoesEmbaralhadas = indicesEmbaralhados.map(i => pergunta.opcoes[i]);
+                const novaPosicaoCorreta = indicesEmbaralhados.indexOf(pergunta.correta);
+                
+                return {
+                    ...pergunta,
+                    opcoes: opcoesEmbaralhadas,
+                    correta: novaPosicaoCorreta
+                };
+            });
+        }
+
+        // Atualizar a barra de progresso
+        function atualizarProgresso() {
+            const progresso = ((currentQuestionIndex + 1) / perguntas.length) * 100;
+            document.getElementById('barraProgresso').style.width = `${progresso}%`;
+            document.getElementById('contadorPerguntas').textContent = `Pergunta ${currentQuestionIndex + 1} de ${perguntas.length}`;
+        }
+
+        // Função para gerar o HTML do cartão da pergunta
+        function generateQuestionCard() {
+            if (currentQuestionIndex >= perguntasEmbaralhadas.length) {
+                finalizarSimulado();
+                return;
+            }
+            
+            const pergunta = perguntasEmbaralhadas[currentQuestionIndex];
+            atualizarProgresso();
+            
+            const letras = ['A', 'B', 'C', 'D'];
+            
+            let htmlContent = `
+                <div class="card">
+                    <p class="question-text">${pergunta.pergunta}</p>
+
+                    <div class="options-form">
+            `;
+
+            // As opções de múltipla escolha
+            pergunta.opcoes.forEach((opcao, index) => {
+                const optionId = `option${letras[index]}-${currentQuestionIndex}`;
+                const isChecked = respostas[currentQuestionIndex] === index ? 'checked' : '';
+                
+                htmlContent += `
+                        <div class="option">
+                            <input type="radio" id="${optionId}" name="answer-${currentQuestionIndex}" value="${index}" class="radio-input" ${isChecked}>
+                            <label for="${optionId}" class="option-label">
+                                <span class="option-letter">${letras[index]}</span>
+                                ${opcao}
+                            </label>
+                        </div>
+                `;
+            });
+
+            // Feedback
+            htmlContent += `
+                    </form>
+
+                    <div id="feedback-${currentQuestionIndex}" class="feedback-resposta" style="display: none;"></div>
+
+                    <div class="card-footer">
+                        <div style="flex: 1; display: flex; justify-content: flex-start;">
+                            ${currentQuestionIndex > 0 ? '<button class="botao-padrao" id="btn-back"><i class="fas fa-arrow-left"></i> Voltar</button>' : ''}
+                        </div>
+                        <div style="flex: 1; display: flex; justify-content: center;">
+                            <button class="botao-padrao botao-aviso" id="btn-pausar"><i class="fas fa-pause"></i> Pausar Simulado</button>
+                        </div>
+                        <div style="flex: 1; display: flex; justify-content: flex-end;">
+                            <button class="botao-padrao" id="btn-next">${currentQuestionIndex === perguntas.length - 1 ? 'Finalizar <i class="fas fa-check"></i>' : 'Próxima <i class="fas fa-arrow-right"></i>'}</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('question-container').innerHTML = htmlContent;
+            
+            // Adicionar event listeners
+            const radioInputs = document.querySelectorAll('.radio-input');
+            radioInputs.forEach(input => {
+                input.addEventListener('change', function() {
+                    const value = parseInt(this.value);
+                    respostas[currentQuestionIndex] = value;
+                    mostrarFeedback(value);
+                    salvarProgresso();
+                });
+            });
+            
+            const btnNext = document.getElementById('btn-next');
+            if (btnNext) {
+                btnNext.addEventListener('click', () => {
+                    if (respostas[currentQuestionIndex] === null) {
+                        alert('Por favor, selecione uma resposta antes de continuar.');
+                        return;
+                    }
+                    currentQuestionIndex++;
+                    if (currentQuestionIndex < perguntasEmbaralhadas.length) {
+                        generateQuestionCard();
+                    } else {
+                        finalizarSimulado();
+                    }
+                });
+            }
+            
+            const btnBack = document.getElementById('btn-back');
+            if (btnBack) {
+                btnBack.addEventListener('click', () => {
+                    if (currentQuestionIndex > 0) {
+                        currentQuestionIndex--;
+                        generateQuestionCard();
+                    }
+                });
+            }
+            
+            const btnPausar = document.getElementById('btn-pausar');
+            if (btnPausar) {
+                btnPausar.addEventListener('click', pausarSimulado);
+            }
+        }
+
+        // Mostrar feedback
+        function mostrarFeedback(respostaIndex) {
+            const pergunta = perguntasEmbaralhadas[currentQuestionIndex];
+            const feedbackContainer = document.getElementById(`feedback-${currentQuestionIndex}`);
+            
+            if (respostaIndex === pergunta.correta) {
+                feedbackContainer.className = 'feedback-resposta feedback-correto';
+                feedbackContainer.innerHTML = `<strong>✓ Resposta Correta!</strong><br>${pergunta.feedback}<br><em>${pergunta.dica}</em>`;
+            } else {
+                feedbackContainer.className = 'feedback-resposta feedback-incorreto';
+                const respostaCorretaTexto = pergunta.opcoes[pergunta.correta];
+                feedbackContainer.innerHTML = `<strong>✗ Resposta Incorreta</strong><br>A resposta mais adequada seria: "${respostaCorretaTexto}"<br>${pergunta.feedback}<br><em>${pergunta.dica}</em>`;
+            }
+            
+            feedbackContainer.style.display = 'block';
+        }
+
+        // Funções de autenticação
+        function showModal(modalId) {
+            // Redirecionar para a página de login
+            window.location.href = 'index.html#login';
+        }
+
+        function logout() {
+            auth.signOut().then(() => {
+                window.location.href = 'index.html';
+            });
+        }
+
+        // Verificar autenticação
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('userMenu').style.display = 'flex';
+                document.getElementById('loginBtn').style.display = 'none';
+                
+                // Mostrar itens do menu para usuários logados
+                document.querySelectorAll('.menu-item-logged').forEach(item => {
+                    item.style.display = 'list-item';
+                });
+                
+                db.collection('users').doc(user.uid).get()
+                    .then((doc) => {
+                        if (doc.exists) {
+                            const userData = doc.data();
+                            userName = userData.name;
+                            
+                            // Usar nome abreviado para caber melhor
+                            const nomeCurto = userData.name.split(' ')[0];
+                            document.getElementById('userName').textContent = `Olá, ${nomeCurto}!`;
+                            
+                            // Verificar se é admin e mostrar o link
+                            if (userData.admin === true) {
+                                const adminItems = document.querySelectorAll('.admin-item');
+                                adminItems.forEach(item => {
+                                    item.style.display = 'list-item';
+                                    item.classList.add('mostrar');
+                                });
+                            }
+                        }
+                    })
+                    .then(() => {
+                        // Verificar se há simulado em andamento
+                        verificarSimuladoSalvo();
+                        // Verificar resultados anteriores
+                        verificarResultadosAnteriores();
+                    });
+            } else {
+                document.getElementById('userMenu').style.display = 'none';
+                document.getElementById('loginBtn').style.display = 'flex';
+                
+                // Esconder itens do menu para usuários não logados
+                document.querySelectorAll('.menu-item-logged').forEach(item => {
+                    item.style.display = 'none';
+                });
+                
+                // Esconder item admin específico
+                document.querySelectorAll('.admin-item').forEach(item => {
+                    item.style.display = 'none';
+                    item.classList.remove('mostrar');
+                });
+            }
+        });
+
+        function verificarSimuladoSalvo() {
+            if (!currentUser) return;
+
+            db.collection('simuladosAndamento').doc(currentUser.uid).get()
+                .then((doc) => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        const agora = new Date();
+                        const dataSalvamento = data.ultimaAtualizacao.toDate();
+                        const diferencaHoras = (agora - dataSalvamento) / (1000 * 60 * 60);
+                        
+                        // Mostrar status do simulado salvo
+                        document.getElementById('continuarSimulado').style.display = 'block';
+                        
+                        // Atualizar status com informações
+                        const statusHtml = `
+                            <p><strong>Simulado em andamento encontrado:</strong></p>
+                            <p>• Progresso: ${data.perguntaAtual + 1} de ${perguntas.length} perguntas</p>
+                            <p>• Última atualização: ${dataSalvamento.toLocaleString('pt-BR')}</p>
+                            ${diferencaHoras > 24 ? '<p style="color: #EA4335;"><i class="fas fa-exclamation-triangle"></i> Este simulado foi salvo há mais de 24 horas</p>' : ''}
+                        `;
+                        document.getElementById('statusSimulado').innerHTML = statusHtml;
+                        document.getElementById('statusSimulado').style.display = 'block';
+                    } else {
+                        document.getElementById('continuarSimulado').style.display = 'none';
+                        document.getElementById('statusSimulado').style.display = 'none';
+                    }
+                });
+        }
+
+        function verificarResultadosAnteriores() {
+            if (!currentUser) return;
+            
+            // Limitar a 5 resultados mais recentes
+            db.collection('resultadoSimulacao')
+                .where('userId', '==', currentUser.uid)
+                .orderBy('data', 'desc')
+                .limit(5)
+                .get()
+                .then((querySnapshot) => {
+                    if (!querySnapshot.empty) {
+                        let statusHtml = `<p><strong>Últimos resultados:</strong></p>`;
+                        
+                        querySnapshot.forEach((doc, index) => {
+                            const data = doc.data();
+                            const dataFormatada = data.data.toDate().toLocaleDateString('pt-BR');
+                            const pontuacao = Math.round(data.pontuacao);
+                            const aprovado = data.aprovado ? '✅ Aprovado' : '❌ Reprovado';
+                            
+                            statusHtml += `
+                                <p>• ${dataFormatada}: ${pontuacao}% - ${aprovado}</p>
+                            `;
+                        });
+                        
+                        const statusDiv = document.getElementById('statusSimulado');
+                        const existingHtml = statusDiv.innerHTML;
+                        statusDiv.innerHTML = existingHtml + statusHtml;
+                        statusDiv.style.display = 'block';
+                    }
+                });
+        }
+
+        function iniciarSimulado() {
+            if (!currentUser) {
+                showModal('loginModal');
+                return;
+            }
+
+            simuladoIniciado = true;
+            currentQuestionIndex = 0;
+            respostas = new Array(perguntas.length).fill(null);
+            resultadoSalvo = false;
+            resultadoId = null;
+            
+            // Embaralhar as perguntas
+            perguntasEmbaralhadas = prepararPerguntasEmbaralhadas();
+            
+            document.getElementById('telaInicial').style.display = 'none';
+            document.getElementById('telaSimulado').style.display = 'block';
+            
+            generateQuestionCard();
+        }
+
+        function continuarSimuladoSalvo() {
+            if (!currentUser) {
+                showModal('loginModal');
+                return;
+            }
+
+            db.collection('simuladosAndamento').doc(currentUser.uid).get()
+                .then((doc) => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        currentQuestionIndex = data.perguntaAtual || 0;
+                        respostas = data.respostas || new Array(perguntas.length).fill(null);
+                        resultadoSalvo = false;
+                        resultadoId = null;
+                        
+                        // Recuperar perguntas embaralhadas salvas ou criar novas
+                        if (data.perguntasEmbaralhadas) {
+                            perguntasEmbaralhadas = data.perguntasEmbaralhadas;
+                        } else {
+                            perguntasEmbaralhadas = prepararPerguntasEmbaralhadas();
+                        }
+                        
+                        document.getElementById('telaInicial').style.display = 'none';
+                        document.getElementById('telaSimulado').style.display = 'block';
+                        generateQuestionCard();
+                    }
+                });
+        }
+
+        function pausarSimulado() {
+            salvarProgresso();
+            alert('Simulado pausado. Seu progresso foi salvo!');
+            document.getElementById('telaSimulado').style.display = 'none';
+            document.getElementById('telaInicial').style.display = 'block';
+            verificarSimuladoSalvo();
+        }
+
+        function salvarProgresso() {
+            if (!currentUser || !simuladoIniciado) return;
+
+            const dados = {
+                respostas: respostas,
+                perguntaAtual: currentQuestionIndex,
+                ultimaAtualizacao: new Date(),
+                dataInicio: new Date(),
+                perguntasEmbaralhadas: perguntasEmbaralhadas
+            };
+
+            db.collection('simuladosAndamento').doc(currentUser.uid).set(dados);
+        }
+
+        function finalizarSimulado() {
+            // Calcular pontuação
+            let acertos = 0;
+            respostas.forEach((resposta, index) => {
+                if (resposta === perguntasEmbaralhadas[index].correta) {
+                    acertos++;
+                }
+            });
+            
+            const pontuacao = (acertos / perguntas.length) * 100;
+            
+            // Mostrar resultados (mas não salvar ainda)
+            mostrarResultados(acertos, pontuacao);
+            
+            // Limpar simulado em andamento
+            if (currentUser) {
+                db.collection('simuladosAndamento').doc(currentUser.uid).delete();
+            }
+            
+            // Resetar flag de resultado salvo
+            resultadoSalvo = false;
+            resultadoId = null;
+        }
+
+        function salvarResultadoFinal() {
+            return new Promise((resolve, reject) => {
+                if (!currentUser) {
+                    reject('Usuário não autenticado');
+                    return;
+                }
+                
+                if (resultadoSalvo && resultadoId) {
+                    resolve(resultadoId);
+                    return;
+                }
+
+                // Calcular pontuação
+                let acertos = 0;
+                respostas.forEach((resposta, index) => {
+                    if (resposta === perguntasEmbaralhadas[index].correta) {
+                        acertos++;
+                    }
+                });
+                
+                const pontuacao = (acertos / perguntas.length) * 100;
+                const aprovado = acertos >= 8;
+
+                const resultado = {
+                    userId: currentUser.uid,
+                    userName: userName,
+                    data: new Date(),
+                    acertos: acertos,
+                    totalPerguntas: perguntas.length,
+                    pontuacao: pontuacao,
+                    tipo: "Simulação de Entrevista",
+                    aprovado: aprovado,
+                    respostas: respostas,
+                    perguntas: perguntasEmbaralhadas
+                };
+
+                // Salvar com nome amigável
+                resultadoId = `simulacao_${currentUser.uid}_${Date.now()}`;
+                
+                db.collection('resultadoSimulacao').doc(resultadoId).set(resultado)
+                    .then(() => {
+                        resultadoSalvo = true;
+                        resolve(resultadoId);
+                    })
+                    .catch(error => {
+                        resultadoSalvo = false;
+                        resultadoId = null;
+                        reject(error);
+                    });
+            });
+        }
+
+        function mostrarResultados(acertos, pontuacao) {
+            document.getElementById('telaSimulado').style.display = 'none';
+            document.getElementById('telaResultados').style.display = 'block';
+            
+            const aprovado = acertos >= 8;
+            const pontuacaoFormatada = Math.round(pontuacao);
+            
+            let html = '';
+            
+            if (aprovado) {
+                html = `
+                    <div class="pontuacao-grande aprovado">${pontuacaoFormatada}%</div>
+                    <p style="font-size: 1.3em; color: #34A853; font-weight: bold; margin-bottom: 20px;">
+                        🎉 Parabéns! Você está bem preparado para entrevistas!
+                    </p>
+                    <p style="color: #666; margin-bottom: 15px;">
+                        Você acertou <strong>${acertos} de ${perguntas.length}</strong> perguntas.
+                    </p>
+                    <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; text-align: left;">
+                        <h4 style="color: #155724; margin-bottom: 10px;">✅ Pontos Fortes:</h4>
+                        <ul style="color: #155724;">
+                            <li>Demonstra bom conhecimento das dinâmicas de entrevista</li>
+                            <li>Sabe elaborar respostas estratégicas</li>
+                            <li>Mostra preparação adequada</li>
+                        </ul>
+                    </div>
+                    <p style="margin-top: 20px; color: #666;">
+                        Continue praticando e mantenha-se atualizado sobre as tendências do mercado!
+                    </p>
+                `;
+            } else {
+                html = `
+                    <div class="pontuacao-grande reprovado">${pontuacaoFormatada}%</div>
+                    <p style="font-size: 1.3em; color: #EA4335; font-weight: bold; margin-bottom: 20px;">
+                        📚 Continue treinando!
+                    </p>
+                    <p style="color: #666; margin-bottom: 15px;">
+                        Você acertou <strong>${acertos} de ${perguntas.length}</strong> perguntas.
+                    </p>
+                    <div style="background: #fde8e8; padding: 20px; border-radius: 8px; text-align: left;">
+                        <h4 style="color: #721c24; margin-bottom: 10px;">💡 Recomendações:</h4>
+                        <ul style="color: #721c24;">
+                            <li>Estude mais as perguntas comuns de entrevista</li>
+                            <li>Pratique suas respostas com exemplos concretos</li>
+                            <li>Pesquise sobre a empresa antes das entrevistas</li>
+                            <li>Use a técnica STAR para contar suas experiências</li>
+                        </ul>
+                    </div>
+                    <p style="margin-top: 20px; color: #666;">
+                        Não desanime! Cada simulado é uma oportunidade de aprendizado.
+                    </p>
+                `;
+            }
+            
+            document.getElementById('resultadoConteudo').innerHTML = html;
+            
+            // Atualizar botão de salvar
+            const btnSalvar = document.getElementById('btnSalvarResultado');
+            if (resultadoSalvo) {
+                btnSalvar.innerHTML = '<i class="fas fa-check"></i> Resultado Salvo';
+                btnSalvar.disabled = true;
+                btnSalvar.style.backgroundColor = '#ccc';
+            } else {
+                btnSalvar.innerHTML = '<i class="fas fa-save"></i> Salvar Resultado';
+                btnSalvar.disabled = false;
+                btnSalvar.style.backgroundColor = '';
+            }
+        }
+
+        function salvarResultado() {
+            if (!currentUser) {
+                alert('Faça login para salvar seu resultado!');
+                showModal('loginModal');
+                return;
+            }
+
+            if (resultadoSalvo) {
+                alert('Este resultado já foi salvo anteriormente!');
+                return;
+            }
+
+            // Calcular pontuação
+            let acertos = 0;
+            respostas.forEach((resposta, index) => {
+                if (resposta === perguntasEmbaralhadas[index].correta) {
+                    acertos++;
+                }
+            });
+            
+            const pontuacao = (acertos / perguntas.length) * 100;
+            const pontuacaoFormatada = Math.round(pontuacao);
+            const aprovado = acertos >= 8;
+
+            const btnSalvar = document.getElementById('btnSalvarResultado');
+            btnSalvar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+            btnSalvar.disabled = true;
+
+            salvarResultadoFinal()
+                .then(() => {
+                    btnSalvar.innerHTML = '<i class="fas fa-check"></i> Resultado Salvo';
+                    btnSalvar.style.backgroundColor = '#34A853';
+                    
+                    if (aprovado) {
+                        alert('✅ Resultado salvo com sucesso!\n\n' +
+                              '🎉 Parabéns! Você foi aprovado na simulação de entrevista!\n\n' +
+                              '📋 Seu resultado foi salvo automaticamente na página "Histórico".\n' +
+                              '📄 Lá você encontrará seu certificado disponível para consulta a qualquer momento.\n\n' +
+                              'Para acessar: Clique em "Histórico" no menu superior.');
+                    } else {
+                        alert('✅ Resultado do simulado salvo com sucesso no seu histórico!\n\n' +
+                              '📋 Você pode visualizar todos os seus resultados na página "Histórico".\n' +
+                              'Para acessar: Clique em "Histórico" no menu superior.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao salvar resultado:', error);
+                    btnSalvar.innerHTML = '<i class="fas fa-save"></i> Salvar Resultado';
+                    btnSalvar.disabled = false;
+                    alert('❌ Erro ao salvar resultado. Tente novamente.');
+                });
+        }
+
+        function refazerSimulado() {
+            document.getElementById('telaResultados').style.display = 'none';
+            iniciarSimulado();
+        }
+
+        function voltarInicio() {
+            document.getElementById('telaResultados').style.display = 'none';
+            document.getElementById('telaInicial').style.display = 'block';
+            simuladoIniciado = false;
+            verificarSimuladoSalvo();
+        }
+
+        // Inicializar a página
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('telaInicial').style.display = 'block';
+            document.getElementById('telaSimulado').style.display = 'none';
+            document.getElementById('telaResultados').style.display = 'none';
+            
+            if (typeof VLibras !== 'undefined') {
+                new window.VLibras.Widget('https://vlibras.gov.br/app');
+            }
+            
+            inicializarAcessibilidade();
+        });
+
+        // Funcionalidade completa do menu de acessibilidade
+        function inicializarAcessibilidade() {
+            const menuAcessibilidade = document.getElementById('menu-acessibilidade-sidebar');
+            const botaoAcessibilidade = document.getElementById('botao-acessibilidade');
+            const fecharMenu = document.getElementById('fechar-menu-acessibilidade');
+            const body = document.body;
+            const opcoes = document.querySelectorAll('.acessibilidade-opcao');
+            const guiaLeituraBarra = document.getElementById('guia-leitura-barra');
+            
+            let nivelFonte = 0;
+            let nivelEspaco = 0;
+            let isGuiaLeituraAtivo = false;
+            let isLinhasLeituraAtivo = false;
+
+            botaoAcessibilidade.addEventListener('click', () => {
+                menuAcessibilidade.classList.toggle('acessibilidade-aberto');
+                menuAcessibilidade.classList.toggle('acessibilidade-fechado');
+            });
+
+            fecharMenu.addEventListener('click', () => {
+                menuAcessibilidade.classList.add('acessibilidade-fechado');
+                menuAcessibilidade.classList.remove('acessibilidade-aberto');
+            });
+
+            function resetarAcessibilidade() {
+                body.className = body.className.split(' ').filter(c => 
+                    !c.startsWith('ajuste-fonte-') && 
+                    !c.startsWith('ajuste-espaco-') && 
+                    !c.endsWith('-cores') &&
+                    !c.endsWith('-contraste') &&
+                    !c.endsWith('-opia') &&
+                    !c.endsWith('-cabecalhos') &&
+                    !c.endsWith('-links') &&
+                    !c.endsWith('-cursor') &&
+                    !c.endsWith('-legivel') &&
+                    !c.endsWith('-leitura')
+                ).join(' ');
+                opcoes.forEach(opt => opt.classList.remove('ativo'));
+                
+                nivelFonte = 0;
+                nivelEspaco = 0;
+                isGuiaLeituraAtivo = false;
+                isLinhasLeituraAtivo = false;
+                
+                guiaLeituraBarra.style.top = '-100px';
+                document.querySelectorAll('.em-foco').forEach(el => el.classList.remove('em-foco'));
+            }
+            
+            opcoes.forEach(botao => {
+                botao.addEventListener('click', () => {
+                    const acao = botao.dataset.acao;
+
+                    if (acao === 'reset') {
+                        resetarAcessibilidade();
+                        return;
+                    }
+                    
+                    if (acao === 'aumentar-fonte') {
+                        if (nivelFonte < 3) nivelFonte++;
+                        body.classList.remove(`ajuste-fonte-${nivelFonte - 1}`);
+                        body.classList.add(`ajuste-fonte-${nivelFonte}`);
+                        botao.classList.add('ativo');
+                    } else if (acao === 'diminuir-fonte') {
+                        if (nivelFonte > 0) nivelFonte--;
+                        body.classList.remove(`ajuste-fonte-${nivelFonte + 1}`);
+                        if (nivelFonte > 0) {
+                            body.classList.add(`ajuste-fonte-${nivelFonte}`);
+                            botao.classList.add('ativo');
+                        } else {
+                            botao.classList.remove('ativo');
+                        }
+                    } else if (acao === 'espacamento-texto') {
+                        if (nivelEspaco < 3) {
+                            nivelEspaco++;
+                            body.classList.remove(`ajuste-espaco-${nivelEspaco - 1}`);
+                            body.classList.add(`ajuste-espaco-${nivelEspaco}`);
+                            botao.classList.add('ativo');
+                        } else {
+                            nivelEspaco = 0;
+                            body.classList.remove('ajuste-espaco-3');
+                            botao.classList.remove('ativo');
+                        }
+                    } else if (acao === 'guia-leitura') {
+                        isGuiaLeituraAtivo = !isGuiaLeituraAtivo;
+                        if (isGuiaLeituraAtivo) {
+                            botao.classList.add('ativo');
+                        } else {
+                            botao.classList.remove('ativo');
+                            guiaLeituraBarra.style.top = '-100px';
+                        }
+                    } else if (acao === 'linhas-leitura') {
+                        isLinhasLeituraAtivo = !isLinhasLeituraAtivo;
+                        if (isLinhasLeituraAtivo) {
+                            botao.classList.add('ativo');
+                        } else {
+                            botao.classList.remove('ativo');
+                            document.querySelectorAll('.em-foco').forEach(el => el.classList.remove('em-foco'));
+                        }
+                    } else {
+                        body.classList.toggle(acao);
+                        
+                        const isToggleable = ['alto-contraste-escuro', 'inverter-cores', 'protanopia', 'deuteranopia', 'fonte-legivel', 'destacar-links', 'destacar-cabecalhos', 'guia-leitura', 'linhas-leitura'];
+                        
+                        if (isToggleable.includes(acao)) {
+                            botao.classList.toggle('ativo');
+                        }
+                    }
+                    
+                    if (['protanopia', 'deuteranopia'].includes(acao)) {
+                        ['protanopia', 'deuteranopia'].forEach(mode => {
+                            if (mode !== acao) {
+                                body.classList.remove(mode);
+                                document.querySelector(`[data-acao="${mode}"]`).classList.remove('ativo');
+                            }
+                        });
+                    }
+                });
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (isGuiaLeituraAtivo) {
+                    guiaLeituraBarra.style.top = `${e.clientY - 20}px`;
+                } else if (!isGuiaLeituraAtivo && guiaLeituraBarra.style.top !== '-100px') {
+                     guiaLeituraBarra.style.top = '-100px';
+                }
+            });
+
+            const elementosLeitura = 'p, li, h1, h2, h3, h4, h5, h6, a, .cartao, .cartao-curso';
+            document.addEventListener('mouseover', (e) => {
+                if (isLinhasLeituraAtivo) {
+                    const target = e.target.closest(elementosLeitura);
+                    
+                    document.querySelectorAll('.em-foco').forEach(el => el.classList.remove('em-foco'));
+                    
+                    if (target) {
+                        target.classList.add('em-foco');
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

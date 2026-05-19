@@ -1,0 +1,2198 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RPG - Desafio Profissional</title>
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
+    <!-- VLibras -->
+    <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+    
+    <style>
+        /* ===== ESTILOS GERAIS DA PÁGINA BASE ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #050505; /* Fundo preto para o jogo */
+            color: #333;
+            line-height: 1.6;
+            width: 100vw;
+            overflow-x: hidden;
+            font-size: 100%;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ===== CABEÇALHO PADRONIZADO (EXATO DA SEGUNDA PÁGINA) ===== */
+        .cabecalho {
+            background: linear-gradient(135deg, #1a3459, #40a4c0);
+            color: white;
+            padding: 1rem 0;
+            width: 100%;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: relative;
+            z-index: 1000;
+        }
+
+        .cabecalho-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            flex-wrap: nowrap; /* IMPORTANTE: não permite quebra de linha */
+        }
+
+        /* Logo - sempre em linha única */
+        .logo-area {
+            flex: 0 0 auto;
+            min-width: 200px; /* Garante espaço mínimo para o logo */
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+            white-space: nowrap;
+            display: inline-block;
+        }
+
+        .logo:hover {
+            opacity: 0.9;
+        }
+
+        /* Menu de navegação - FLEXÍVEL */
+        .menu-principal {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            margin: 0 1rem;
+            min-width: 0; /* Permite que o menu encolha se necessário */
+        }
+
+        .menu-principal ul {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            flex-wrap: nowrap; /* NÃO permite quebra de linha */
+            justify-content: center;
+            gap: 0.5rem; /* Espaço uniforme entre itens */
+            max-width: 100%;
+            overflow: hidden; /* Esconde se ultrapassar */
+        }
+
+        .menu-principal li {
+            flex: 0 0 auto;
+            margin: 0;
+        }
+
+        .menu-link {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 0.8rem;
+            border-radius: 4px;
+            transition: all 0.3s;
+            font-weight: 500;
+            white-space: nowrap;
+            display: inline-block;
+            font-size: 0.95rem; /* Um pouco menor para caber mais itens */
+        }
+
+        .menu-link:hover, .menu-link.ativo {
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        /* Área do usuário */
+        .user-actions {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            min-width: 180px; /* Garante espaço mínimo */
+            justify-content: flex-end;
+        }
+
+        .user-menu {
+            display: none;
+            align-items: center;
+            gap: 0.8rem;
+            flex-wrap: nowrap;
+        }
+
+        .user-info {
+            color: white;
+            font-weight: 500;
+            white-space: nowrap;
+            font-size: 0.9rem;
+        }
+
+        .botao-sair {
+            background-color: #EA4335;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s;
+            white-space: nowrap;
+            font-size: 0.9rem;
+        }
+
+        .botao-sair:hover {
+            background-color: #d33426;
+        }
+
+        .botao-login {
+            background-color: #d1a10f;
+            color: #1a3459;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+            font-size: 0.9rem;
+        }
+
+        .botao-login:hover {
+            background-color: #e0b433;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .icone-login {
+            font-size: 1rem;
+        }
+
+        /* Menu item para admin - sempre em linha */
+        .admin-item {
+            display: none !important;
+        }
+
+        .admin-item.mostrar {
+            display: list-item !important;
+        }
+
+        .menu-item-logged {
+            display: none;
+        }
+
+        /* Para telas muito pequenas, reduzimos o padding dos links */
+        @media (max-width: 1100px) {
+            .menu-link {
+                padding: 0.5rem 0.6rem;
+                font-size: 0.9rem;
+            }
+            
+            .logo {
+                font-size: 1.6rem;
+            }
+        }
+
+        /* Responsividade do cabeçalho */
+        @media (max-width: 992px) {
+            .cabecalho-container {
+                flex-direction: column;
+                gap: 1rem;
+                flex-wrap: wrap;
+            }
+            
+            .menu-principal {
+                margin: 1rem 0;
+                order: 3;
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .menu-principal ul {
+                flex-wrap: wrap; /* Permite quebra em telas menores */
+                justify-content: center;
+                gap: 0.3rem;
+            }
+            
+            .logo-area {
+                order: 1;
+                min-width: auto;
+            }
+            
+            .user-actions {
+                order: 2;
+                min-width: auto;
+                justify-content: center;
+            }
+            
+            .menu-link {
+                padding: 0.4rem 0.6rem;
+                font-size: 0.85rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .menu-principal ul {
+                flex-wrap: wrap;
+            }
+            
+            .menu-principal li {
+                margin: 0.2rem;
+            }
+            
+            .menu-link {
+                padding: 0.4rem 0.5rem;
+                font-size: 0.85rem;
+            }
+            
+            .logo {
+                font-size: 1.4rem;
+            }
+            
+            .botao-login, .botao-sair {
+                padding: 0.5rem 0.8rem;
+                font-size: 0.85rem;
+            }
+            
+            .user-info {
+                font-size: 0.85rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .menu-principal ul {
+                justify-content: space-around;
+                gap: 0.2rem;
+            }
+            
+            .menu-link {
+                padding: 0.3rem 0.4rem;
+                font-size: 0.8rem;
+            }
+            
+            .user-info {
+                display: none; /* Esconde o nome em telas muito pequenas */
+            }
+            
+            .botao-login span.icone-login {
+                display: none; /* Esconde o ícone em telas muito pequenas */
+            }
+        }
+
+        /* ===== CONTEÚDO PRINCIPAL DO JOGO ===== */
+        .main-content {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* ===== ESTILOS ORIGINAIS DO JOGO (COM CENTRALIZAÇÃO) ===== */
+        #game-screen {
+            position: relative;
+            width: 100%;
+            height: 85vh;
+            max-width: 1400px;
+            border: 5px solid #fff;
+            box-shadow: 0 0 40px rgba(0,100,255,0.3);
+            border-radius: 15px;
+            overflow: hidden;
+            
+            background-image: url('img-jogo/cena.jpg');
+            background-size: auto 100%; 
+            background-position: 0px center;
+            background-repeat: repeat-x; 
+            transition: background-position 5s linear;
+        }
+
+        #history-btn {
+            margin-top: 20px;
+            padding: 15px 30px;
+            font-size: 20px;
+            font-weight: 900;
+            background-color: #f1c40f; 
+            color: #000000; 
+            border: 4px solid #fff;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            text-transform: uppercase;
+        }
+        #history-btn:hover { 
+            transform: scale(1.05); 
+            background-color: #d4ac0d; 
+        }
+
+        #history-modal {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60%;
+            max-height: 70%;
+            background-color: rgba(0, 0, 0, 0.95);
+            border: 4px solid #f1c40f;
+            border-radius: 20px;
+            padding: 20px;
+            z-index: 150;
+            color: white;
+            overflow-y: auto;
+            text-align: center;
+        }
+
+        #history-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .history-item {
+            border-bottom: 1px solid #555;
+            padding: 10px;
+            font-size: 18px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .modal-btn {
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 20px;
+            margin-left: 10px;
+            border: none;
+        }
+
+        .close-history {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .clear-history {
+            background: #95a5a6;
+            color: white;
+        }
+        .clear-history:hover { background: #7f8c8d; }
+
+        .scrolling-bg {
+            animation: moveBackgroundMenu 20s linear infinite;
+            transition: none !important; 
+        }
+
+        @keyframes moveBackgroundMenu {
+            from { background-position: 0 center; }
+            to { background-position: -2000px center; }
+        }
+
+        /* --- FLASH / PISCAR (0.3s) --- */
+        #flash-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 200;
+            opacity: 0;
+        }
+
+        .flash-red { animation: flashRedAnim 0.3s ease-in-out 3; }
+        .flash-green { animation: flashGreenAnim 0.3s ease-in-out 3; }
+
+        @keyframes flashRedAnim {
+            0%, 100% { background-color: transparent; opacity: 0; }
+            50% { background-color: rgba(255, 0, 0, 0.25); opacity: 1; }
+        }
+
+        @keyframes flashGreenAnim {
+            0%, 100% { background-color: transparent; opacity: 0; }
+            50% { background-color: rgba(0, 255, 0, 0.25); opacity: 1; }
+        }
+
+        #focus-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.3);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+            z-index: 2;
+        }
+
+        #focus-overlay.active { opacity: 1; }
+
+        #hud {
+            display: none;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            align-items: center; 
+            gap: 20px; 
+            z-index: 50;
+        }
+
+        #lives-container { display: flex; gap: 5px; }
+
+        .heart {
+            width: 50px;
+            height: 50px;
+            background-image: url('img-jogo/cora.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+        }
+
+        #question-counter {
+            color: white;
+            font-size: 32px;
+            font-weight: 900;
+            text-shadow: 3px 3px 0px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+            background: none; border: none; box-shadow: none; padding: 0;
+        }
+
+        #start-overlay {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        #start-button {
+            padding: 30px 80px;
+            font-size: 40px;
+            font-weight: 900;
+            text-transform: uppercase;
+            color: white;
+            background: linear-gradient(45deg, #00c6ff, #0072ff);
+            border: 5px solid white;
+            border-radius: 60px;
+            cursor: pointer;
+            box-shadow: 0 0 40px rgba(0, 114, 255, 0.8);
+            transition: transform 0.2s;
+        }
+        #start-button:hover { transform: scale(1.1); }
+
+        #next-question-btn {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 25px 50px;
+            font-size: 30px;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            border: 4px solid white;
+            border-radius: 20px;
+            cursor: pointer;
+            z-index: 60;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+        }
+        #next-question-btn:hover { transform: translate(-50%, -50%) scale(1.1); background: linear-gradient(45deg, #2980b9, #3498db); }
+
+        #end-screen {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.95);
+            color: white;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 110;
+        }
+
+        .game-button {
+            padding: 20px 40px;
+            font-size: 24px;
+            cursor: pointer;
+            margin-top: 30px;
+            border-radius: 10px;
+            background-color: #3498db; 
+            color: white;
+            border: none;
+            font-weight: bold;
+            transition: transform 0.2s, background-color 0.2s, box-shadow 0.2s;
+        }
+
+        .game-button.secondary {
+            background-color: #7f8c8d; 
+        }
+
+        .game-button:hover {
+            transform: scale(1.05); 
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3); 
+        }
+
+        .game-button:not(.secondary):hover { background-color: #2980b9; }
+        .game-button.secondary:hover { background-color: #95a5a6; }
+
+        /* CAIXA DE PERGUNTA CENTRALIZADA */
+        #question-box {
+            display: none;
+            position: absolute;
+            top: 14%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 900px;
+            background-color: rgba(0, 0, 0, 0.95);
+            color: #fff;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            font-size: 26px; 
+            border: 4px solid #555;
+            z-index: 30;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+            line-height: 1.4;
+        }
+
+        #character {
+            display: none;
+            position: absolute;
+            left: 25%;
+            bottom: 11%; 
+            width: 150px;
+            height: 200px;
+            background-image: url('img-jogo/perso.png'); 
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: bottom center;
+            z-index: 10;
+        }
+
+        #question-mark {
+            display: none; 
+            position: absolute;
+            top: -280px; 
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            height: 300px;
+            background-image: url('img-jogo/interroga.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            z-index: 11;
+        }
+
+        .spinning {
+            display: block !important;
+            animation: spin 2.5s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: translateX(-50%) rotateY(0deg); }
+            100% { transform: translateX(-50%) rotateY(360deg); }
+        }
+
+        /* RESPOSTAS CENTRALIZADAS */
+        #answers-container {
+            display: none;
+            position: absolute;
+            bottom: 5%; 
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 1000px;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 15px; 
+            z-index: 30;
+        }
+
+        .answer-bubble {
+            width: 100%;
+            max-width: 900px;
+            height: 120px;
+            background-image: url('img-jogo/balao.png');
+            background-size: 100% 100%;
+            background-repeat: no-repeat;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #000;
+            font-weight: bold;
+            font-size: 24px; 
+            text-align: center;
+            padding: 10px 40px;
+            user-select: none;
+            transition: transform 0.1s;
+            margin: 5px 0;
+            margin-top: -55px;
+        }
+
+        .answer-bubble:hover { 
+            transform: scale(1.02); 
+            filter: brightness(1.05); 
+            z-index: 35; 
+        }
+
+        /* ===== RODAPÉ EXATO DA SEGUNDA PÁGINA ===== */
+        .rodape {
+            background: linear-gradient(135deg, #1a3459, #40a4c0);
+            color: white;
+            padding: 3rem 0 2rem;
+            width: 100%;
+        }
+
+        .rodape-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .rodape-coluna h3, .rodape-coluna h4 {
+            margin-bottom: 1rem;
+        }
+
+        .rodape-coluna ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .rodape-coluna li {
+            margin-bottom: 0.5rem;
+        }
+
+        .rodape-coluna a {
+            color: white;
+            text-decoration: none;
+            transition: opacity 0.3s;
+        }
+
+        .rodape-coluna a:hover {
+            opacity: 0.8;
+        }
+
+        .rodape-social .social-icones {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .rodape-social img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+
+        .rodape-social img:hover {
+            transform: scale(1.1);
+        }
+
+        /* ===== ACESSIBILIDADE ===== */
+        /* Botão de Acessibilidade */
+        #botao-acessibilidade {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background-color: #40a4c0;
+            color: #ffffff;
+            border: none;
+            border-radius: 50%;
+            font-size: 2em;
+            font-weight: bold;
+            line-height: 1;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            z-index: 2000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        #botao-acessibilidade:hover {
+            background-color: #5bbbd9;
+            transform: scale(1.05);
+        }
+
+        /* Menu de Acessibilidade */
+        #menu-acessibilidade-sidebar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 300px;
+            height: 100%;
+            background-color: #f0f4f7;
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+            z-index: 2001;
+            transition: transform 0.4s ease;
+            overflow-y: auto;
+        }
+        
+        .acessibilidade-fechado {
+            transform: translateX(100%);
+        }
+        
+        .acessibilidade-aberto {
+            transform: translateX(0);
+        }
+        
+        .acessibilidade-header {
+            background-color: #1a3459;
+            color: #ffffff;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .acessibilidade-header h3 {
+            margin: 0;
+            font-size: 1.3em;
+        }
+        
+        #fechar-menu-acessibilidade {
+            background: none;
+            border: 1px solid #ffffff;
+            color: #ffffff;
+            font-size: 1.1em;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        
+        #fechar-menu-acessibilidade:hover {
+            background-color: #40a4c0;
+            border-color: #40a4c0;
+        }
+        
+        .acessibilidade-opcoes-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            padding: 20px;
+        }
+        
+        .grid-section-title {
+            grid-column: span 2;
+            background-color: #e3f2fd;
+            color: #1a3459;
+            padding: 8px 15px;
+            margin-top: 15px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            font-size: 1.1em;
+            font-weight: 700;
+            text-align: center;
+        }
+        
+        .acessibilidade-opcao {
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            color: #1a3459;
+            padding: 15px 10px;
+            font-size: 0.9em;
+            font-weight: 600;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            line-height: 1.2;
+            min-height: 75px;
+        }
+        
+        .acessibilidade-opcao:hover {
+            background-color: #e3f2fd;
+            border-color: #40a4c0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .acessibilidade-opcao.ativo {
+            background-color: #40a4c0;
+            color: #ffffff;
+            border-color: #1a3459;
+        }
+        
+        .icone-acao {
+            font-size: 1.8em;
+            display: block;
+            margin-bottom: 5px;
+            color: #40a4c0;
+            font-weight: bold;
+        }
+        
+        .acessibilidade-opcao.ativo .icone-acao {
+            color: #ffffff;
+        }
+        
+        .reset-button {
+            grid-column: span 2;
+            background-color: #d1a10f;
+            color: #1a3459;
+        }
+        
+        .reset-button:hover {
+            background-color: #e0b433;
+            border-color: #1a3459;
+            color: #1a3459;
+        }
+        
+        .reset-button.ativo {
+            background-color: #d1a10f;
+            color: #1a3459;
+        }
+
+        /* Guia de Leitura */
+        #guia-leitura-barra {
+            position: fixed;
+            height: 40px;
+            width: 100%;
+            background-color: rgba(255, 255, 0, 0.4);
+            pointer-events: none;
+            z-index: 9999;
+            top: -100px;
+            transition: none;
+        }
+
+        /* Estilos para Acessibilidade */
+        .ajuste-fonte-1 { font-size: 110% !important; }
+        .ajuste-fonte-2 { font-size: 125% !important; }
+        .ajuste-fonte-3 { font-size: 150% !important; }
+        
+        .ajuste-espaco-1 { letter-spacing: 1px !important; }
+        .ajuste-espaco-2 { letter-spacing: 2px !important; }
+        .ajuste-espaco-3 { letter-spacing: 3px !important; }
+        
+        .fonte-legivel { font-family: Arial, sans-serif !important; }
+        
+        .alto-contraste-escuro {
+            background-color: #000000 !important;
+            color: #ffffff !important;
+        }
+        
+        .alto-contraste-escuro * {
+            background-color: #000000 !important;
+            color: #ffffff !important;
+            border-color: #ffffff !important;
+        }
+        
+        .inverter-cores {
+            filter: invert(1) hue-rotate(180deg);
+        }
+        
+        .protanopia {
+            filter: url('#protanopia-filter');
+        }
+        
+        .deuteranopia {
+            filter: url('#deuteranopia-filter');
+        }
+        
+        .destacar-links a {
+            background-color: yellow !important;
+            color: #000000 !important;
+            padding: 2px 4px !important;
+            border-radius: 3px !important;
+        }
+        
+        .destacar-cabecalhos h1, 
+        .destacar-cabecalhos h2, 
+        .destacar-cabecalhos h3, 
+        .destacar-cabecalhos h4, 
+        .destacar-cabecalhos h5, 
+        .destacar-cabecalhos h6 {
+            background-color: #ffff00 !important;
+            color: #000000 !important;
+            padding: 5px 10px !important;
+            border-radius: 5px !important;
+        }
+        
+        .em-foco {
+            background-color: rgba(255, 255, 0, 0.3) !important;
+            outline: 2px solid #000000 !important;
+        }
+
+        /* MODAIS - exatamente como na página original */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: white;
+            border-radius: 12px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            color: #1a3459;
+            font-weight: 600;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6c757d;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #1a3459;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            font-size: 1rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #40a4c0;
+        }
+
+        .btn-modal {
+            display: inline-block;
+            padding: 0.8rem 1.5rem;
+            background-color: #40a4c0;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .btn-modal:hover {
+            background-color: #5bbbd9;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .link-modal {
+            color: #40a4c0;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .link-modal:hover {
+            text-decoration: underline;
+        }
+
+        /* Filtros daltonismo (adicionado no final) */
+        svg {
+            position: absolute;
+            width: 0;
+            height: 0;
+        }
+
+        /* Responsividade */
+        @media (max-width: 992px) {
+            .main-content {
+                padding: 15px;
+            }
+            
+            #game-screen {
+                height: 75vh;
+            }
+            
+            .acessibilidade-opcoes-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .grid-section-title {
+                grid-column: span 1;
+            }
+            
+            .reset-button {
+                grid-column: span 1;
+            }
+            
+            #question-box {
+                width: 90%;
+                font-size: 22px;
+                padding: 20px;
+            }
+            
+            .answer-bubble {
+                height: 100px;
+                font-size: 20px;
+                padding: 10px 30px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 10px;
+            }
+            
+            #game-screen {
+                height: 70vh;
+            }
+            
+            #question-box {
+                width: 95%;
+                font-size: 20px;
+                padding: 15px;
+            }
+            
+            .answer-bubble {
+                height: 90px;
+                font-size: 18px;
+                padding: 10px 20px;
+            }
+            
+            .rodape-container {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+            
+            #menu-acessibilidade-sidebar {
+                width: 280px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main-content {
+                padding: 5px;
+            }
+            
+            #game-screen {
+                height: 65vh;
+                border-width: 3px;
+            }
+            
+            #question-box {
+                width: 98%;
+                font-size: 18px;
+                padding: 12px;
+            }
+            
+            .answer-bubble {
+                height: 80px;
+                font-size: 16px;
+                padding: 8px 15px;
+            }
+            
+            #start-button {
+                padding: 20px 40px;
+                font-size: 28px;
+            }
+            
+            #menu-acessibilidade-sidebar {
+                width: 250px;
+            }
+            
+            .acessibilidade-opcoes-grid {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body id="body-principal">
+    
+    <!-- CABEÇALHO PADRONIZADO -->
+    <header class="cabecalho">
+        <div class="cabecalho-container">
+            <!-- Logo - sempre em linha única -->
+            <div class="logo-area">
+                <a href="index.html" class="logo">Formação Sem Barreiras</a>
+            </div>
+            
+            <!-- Menu de navegação compacto -->
+            <nav class="menu-principal">
+                <ul>
+                    <li><a href="index.html" class="menu-link">Home</a></li>
+                    <li class="menu-item-logged"><a href="cursos.html" class="menu-link">Cursos</a></li>
+                    <li class="menu-item-logged"><a href="simulador.html" class="menu-link">Simulação</a></li>
+                    <li class="menu-item-logged"><a href="jogos.html" class="menu-link ativo">Jogo</a></li>
+                    <li class="menu-item-logged"><a href="historico.html" class="menu-link">Histórico</a></li>
+                    <!-- Link Admin (só aparece para administradores) -->
+                    <li class="menu-item-logged admin-item" style="display: none;">
+                        <a href="admin.html" class="menu-link">Admin</a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <!-- Área do usuário compacta -->
+            <div class="user-actions">
+                <div class="user-menu" id="userMenu">
+                    <span class="user-info" id="userName">Olá, Usuário!</span>
+                    <button class="botao-sair" onclick="logout()">Sair</button>
+                </div>
+                <button id="loginBtn" class="botao-login" onclick="showModal('loginModal')">
+                    <span class="icone-login">👤</span> Área do Cliente
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <div class="main-content">
+        <!-- ÁREA DO JOGO (CÓDIGO ORIGINAL) -->
+        <div id="game-screen" class="scrolling-bg">
+            <div id="flash-overlay"></div>
+            <div id="focus-overlay"></div>
+
+            <div id="start-overlay">
+                <button id="start-button" onclick="startGame()">INICIAR DESAFIO</button>
+                <button id="history-btn" onclick="toggleHistory()">Ver Histórico</button>
+            </div>
+
+            <div id="history-modal">
+                <h2>Histórico de Jogadas</h2>
+                <ul id="history-list">
+                </ul>
+                <div style="display: flex; justify-content: center; gap: 10px;">
+                    <button class="modal-btn clear-history" onclick="clearHistory()">Limpar Histórico</button>
+                    <button class="modal-btn close-history" onclick="toggleHistory()">Fechar</button>
+                </div>
+            </div>
+
+            <button id="next-question-btn" onclick="showQuestionPhase()">Ir para Pergunta</button>
+            
+            <div id="hud">
+                <div id="lives-container">
+                    <div class="heart" id="heart1"></div>
+                    <div class="heart" id="heart2"></div>
+                    <div class="heart" id="heart3"></div>
+                </div>
+                <div id="question-counter">Q: 1/10</div>
+            </div>
+
+            <div id="question-box">Carregando...</div>
+            
+            <div id="character">
+                <div id="question-mark"></div>
+            </div>
+            
+            <div id="answers-container">
+                <div class="answer-bubble" onclick="checkAnswer(0)">Opção A</div>
+                <div class="answer-bubble" onclick="checkAnswer(1)">Opção B</div>
+                <div class="answer-bubble" onclick="checkAnswer(2)">Opção C</div>
+            </div>
+            
+            <div id="end-screen">
+                <h1 id="end-message">Fim de Jogo</h1>
+                <button class="game-button" onclick="restartGame()">Jogar Novamente</button>
+                <button class="game-button secondary" onclick="goToMenu()">Voltar ao Menu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== RODAPÉ ===== -->
+    <footer class="rodape">
+        <div class="rodape-container">
+            <div class="rodape-coluna rodape-info">
+                <h3>Formação Sem Barreiras</h3>
+                <p>&copy; 2025 Todos os direitos reservados a Victor Costa.</p>
+            </div>
+            <div class="rodape-coluna">
+                <h4>Links Úteis</h4>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="cursos.html" class="menu-item-logged">Cursos</a></li>
+                    <li><a href="simulador.html" class="menu-item-logged">Simulação entrevista</a></li>
+                    <li><a href="jogos.html" class="menu-item-logged">Jogos</a></li>
+                    <li><a href="historico.html" class="menu-item-logged">Histórico</a></li>
+                    <li><a href="javascript:void(0);" onclick="showModal('registerModal')">Cadastro/Login</a></li>
+                </ul>
+            </div>
+            <div class="rodape-coluna rodape-social">
+                <h4>Siga-nos</h4>
+                <div class="social-icones">
+                    <a href="#"><img src="img/instagram.png" alt="Instagram"></a> 
+                    <a href="#"><img src="img/Tiktok_icon.svg.png" alt="TikTok"></a> 
+                    <a href="#"><img src="img/Youtube_logo.png" alt="YouTube"></a> 
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modal de Login -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Entrar na Conta</h3>
+                <button class="close-modal" onclick="closeModal('loginModal')">&times;</button>
+            </div>
+            <div id="loginMessage"></div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginEmail" class="form-label">E-mail</label>
+                    <input type="email" id="loginEmail" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword" class="form-label">Senha</label>
+                    <input type="password" id="loginPassword" class="form-control" required>
+                </div>
+                <button type="submit" class="btn-modal">Entrar</button>
+            </form>
+            <p style="margin-top: 1.5rem; text-align: center;">
+                Não tem uma conta? <a href="#" class="link-modal" onclick="closeModal('loginModal'); showModal('registerModal')">Cadastre-se aqui</a>.
+            </p>
+        </div>
+    </div>
+
+    <!-- Modal de Registro -->
+    <div id="registerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Criar uma Conta</h3>
+                <button class="close-modal" onclick="closeModal('registerModal')">&times;</button>
+            </div>
+            <div id="registerMessage"></div>
+            <form id="registerForm">
+                <div class="form-group">
+                    <label for="regName" class="form-label">Nome completo</label>
+                    <input type="text" id="regName" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="regEmail" class="form-label">E-mail</label>
+                    <input type="email" id="regEmail" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="regPassword" class="form-label">Senha</label>
+                    <input type="password" id="regPassword" class="form-control" required minlength="6">
+                </div>
+                <div class="form-group">
+                    <label for="regAccessibility" class="form-label">Preferências de Acessibilidade</label>
+                    <select id="regAccessibility" class="form-control">
+                        <option value="none">Nenhuma necessidade específica</option>
+                        <option value="deaf">Surdo</option>
+                        <option value="blind">Deficiência visual</option>
+                        <option value="intellectual">Deficiência intelectual</option>
+                        <option value="autistic">Autista</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-modal">Criar conta</button>
+            </form>
+            <p style="margin-top: 1.5rem; text-align: center;">
+                Já tem uma conta? <a href="#" class="link-modal" onclick="closeModal('registerModal'); showModal('loginModal')">Faça login aqui</a>.
+            </p>
+        </div>
+    </div>
+
+    <!-- ELEMENTOS DE ACESSIBILIDADE -->
+    <div id="guia-leitura-barra"></div>
+    
+    <aside id="menu-acessibilidade-sidebar" class="acessibilidade-fechado">
+        <div class="acessibilidade-header">
+            <h3>Acessibilidade</h3>
+            <button id="fechar-menu-acessibilidade" aria-label="Fechar menu">X</button>
+        </div>
+        
+        <div class="acessibilidade-opcoes-grid">
+            
+            <h4 class="grid-section-title">Leitura e Dislexia</h4>
+            <button class="acessibilidade-opcao" data-acao="aumentar-fonte">
+                <span class="icone-acao">A+</span> Aumentar Fonte
+            </button>
+            <button class="acessibilidade-opcao" data-acao="diminuir-fonte">
+                <span class="icone-acao">A-</span> Diminuir Fonte
+            </button>
+            <button class="acessibilidade-opcao" data-acao="fonte-legivel">
+                <span class="icone-acao">🔤</span> Fonte Legível
+            </button>
+            <button class="acessibilidade-opcao" data-acao="espacamento-texto">
+                <span class="icone-acao">↔️</span> Aumentar Espaço
+            </button>
+
+            <h4 class="grid-section-title">Contraste e Cores</h4>
+            <button class="acessibilidade-opcao" data-acao="alto-contraste-escuro">
+                <span class="icone-acao">🌙</span> Alto Contraste Escuro
+            </button>
+            <button class="acessibilidade-opcao" data-acao="inverter-cores">
+                <span class="icone-acao">🔄</span> Inverter Cores
+            </button>
+            <button class="acessibilidade-opcao" data-acao="protanopia">
+                <span class="icone-acao">🔴</span> Modo Protanopia
+            </button>
+            <button class="acessibilidade-opcao" data-acao="deuteranopia">
+                <span class="icone-acao">🟢</span> Modo Deuteranopia
+            </button>
+
+            <h4 class="grid-section-title">Foco e Navegação</h4>
+            <button class="acessibilidade-opcao" data-acao="destacar-links">
+                <span class="icone-acao">🔗</span> Destacar Links
+            </button>
+            <button class="acessibilidade-opcao" data-acao="destacar-cabecalhos">
+                <span class="icone-acao">H1</span> Destacar Cabeçalhos
+            </button>
+            <button class="acessibilidade-opcao" data-acao="guia-leitura">
+                <span class="icone-acao">💬</span> Guia de Leitura
+            </button>
+             <button class="acessibilidade-opcao" data-acao="linhas-leitura">
+                <span class="icone-acao">🔍</span> Linhas de Leitura
+            </button>
+            
+            <button class="acessibilidade-opcao reset-button" data-acao="reset">
+                <span class="icone-acao">🔄</span> **REDEFINIR TUDO**
+            </button>
+        </div>
+    </aside>
+
+    <button id="botao-acessibilidade" aria-label="Abrir menu de acessibilidade">♿</button>
+
+    <!-- VLibras -->
+    <div vw class="enabled">
+        <div vw-access-button class="active"></div>
+        <div vw-plugin-wrapper>
+            <div class="vw-plugin-top-wrapper"></div>
+        </div>
+    </div>
+
+    <!-- Filtros daltonismo -->
+    <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="0" height="0" style="position:absolute">
+        <defs>
+            <filter id="protanopia-filter">
+                <feColorMatrix type="matrix" values="0.567, 0.433, 0, 0, 0
+                                                     0.558, 0.442, 0, 0, 0
+                                                     0, 0.242, 0.758, 0, 0
+                                                     0, 0, 0, 1, 0" />
+            </filter>
+            
+            <filter id="deuteranopia-filter">
+                <feColorMatrix type="matrix" values="0.625, 0.375, 0, 0, 0
+                                                     0.7, 0.3, 0, 0, 0
+                                                     0, 0.3, 0.7, 0, 0
+                                                     0, 0, 0, 1, 0" />
+            </filter>
+        </defs>
+    </svg>
+
+    <script>
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyAcfMe_zFeS7mGJA1UhA65goiP1gOh-vlI",
+            authDomain: "teste-esse-06-12.firebaseapp.com",
+            projectId: "teste-esse-06-12",
+            storageBucket: "teste-esse-06-12.firebasestorage.app",
+            messagingSenderId: "988541369532",
+            appId: "1:988541369532:web:f5ab3bae7bc0279b1064b9",
+            measurementId: "G-Q2WVXT54TX"
+        };
+        
+        // Inicializar Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        let currentUser = null;
+
+        // Funções do Modal
+        function showModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+            // Limpar mensagens
+            if (document.getElementById('loginMessage')) {
+                document.getElementById('loginMessage').innerHTML = '';
+            }
+            if (document.getElementById('registerMessage')) {
+                document.getElementById('registerMessage').innerHTML = '';
+            }
+        }
+
+        // Fechar quando clicar fora do modal
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                closeModal(event.target.id);
+            }
+        }
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inicializa VLibras
+            if (typeof VLibras !== 'undefined') {
+                new window.VLibras.Widget('https://vlibras.gov.br/app');
+            }
+            
+            // Inicializar sistema de acessibilidade
+            inicializarAcessibilidade();
+            
+            // Verificar estado de autenticação
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    currentUser = user;
+                    updateUIAfterLogin();
+                } else {
+                    currentUser = null;
+                    updateUIAfterLogout();
+                }
+            });
+
+            // Configurar formulário de login
+            const loginForm = document.getElementById('loginForm');
+            if (loginForm) {
+                loginForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const email = document.getElementById('loginEmail').value;
+                    const password = document.getElementById('loginPassword').value;
+
+                    auth.signInWithEmailAndPassword(email, password)
+                        .then((userCredential) => {
+                            currentUser = userCredential.user;
+                            updateUIAfterLogin();
+                            closeModal('loginModal');
+                        })
+                        .catch((error) => {
+                            const loginMessage = document.getElementById('loginMessage');
+                            if (loginMessage) {
+                                loginMessage.innerHTML = '<div class="alert alert-error">Erro ao fazer login: ' + error.message + '</div>';
+                            }
+                        });
+                });
+            }
+
+            // Configurar formulário de registro
+            const registerForm = document.getElementById('registerForm');
+            if (registerForm) {
+                registerForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const email = document.getElementById('regEmail').value;
+                    const password = document.getElementById('regPassword').value;
+                    const name = document.getElementById('regName').value;
+                    const accessibility = document.getElementById('regAccessibility').value;
+
+                    auth.createUserWithEmailAndPassword(email, password)
+                        .then((userCredential) => {
+                            const user = userCredential.user;
+                            
+                            // Primeiro, criar o documento do usuário
+                            return db.collection('users').doc(user.uid).set({
+                                name: name,
+                                email: email,
+                                accessibility: accessibility,
+                                admin: false,
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                                avatar: "avatar1"
+                            });
+                        })
+                        .then(() => {
+                            // Atualizar contador de usuários
+                            return db.collection('countUsers').doc('contador').update({
+                                totalUsers: firebase.firestore.FieldValue.increment(1),
+                                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                        })
+                        .then(() => {
+                            document.getElementById('registerMessage').innerHTML = 
+                                '<div class="alert alert-success">Conta criada com sucesso! Redirecionando...</div>';
+                            setTimeout(() => {
+                                closeModal('registerModal');
+                                updateUIAfterLogin();
+                            }, 2000);
+                        })
+                        .catch((error) => {
+                            document.getElementById('registerMessage').innerHTML = 
+                                '<div class="alert alert-error">Erro ao criar conta: ' + error.message + '</div>';
+                        });
+                });
+            }
+        });
+
+        function updateUIAfterLogin() {
+            const loginBtn = document.getElementById('loginBtn');
+            const userMenu = document.getElementById('userMenu');
+            const userName = document.getElementById('userName');
+            
+            if (loginBtn) loginBtn.style.display = 'none';
+            if (userMenu) userMenu.style.display = 'flex';
+            
+            // Mostrar itens do menu para usuários logados
+            document.querySelectorAll('.menu-item-logged').forEach(item => {
+                item.style.display = 'list-item';
+            });
+
+            // Obter dados do usuário
+            if (currentUser) {
+                db.collection('users').doc(currentUser.uid).get()
+                    .then((doc) => {
+                        if (doc.exists) {
+                            const userData = doc.data();
+                            const nomeCurto = userData.name.split(' ')[0];
+                            if (userName) userName.textContent = `Olá, ${nomeCurto}!`;
+                            
+                            // Verificar se é admin
+                            if (userData.admin === true) {
+                                const adminItems = document.querySelectorAll('.admin-item');
+                                adminItems.forEach(item => {
+                                    item.style.display = 'list-item';
+                                    item.classList.add('mostrar');
+                                });
+                            }
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("Erro ao obter dados do usuário:", error);
+                    });
+            }
+        }
+
+        function updateUIAfterLogout() {
+            const loginBtn = document.getElementById('loginBtn');
+            const userMenu = document.getElementById('userMenu');
+            
+            if (loginBtn) loginBtn.style.display = 'block';
+            if (userMenu) userMenu.style.display = 'none';
+            
+            // Esconder itens do menu para usuários não logados
+            document.querySelectorAll('.menu-item-logged').forEach(item => {
+                item.style.display = 'none';
+            });
+            
+            // Esconder item admin específico
+            document.querySelectorAll('.admin-item').forEach(item => {
+                item.style.display = 'none';
+                item.classList.remove('mostrar');
+            });
+        }
+
+        function logout() {
+            auth.signOut().then(() => {
+                currentUser = null;
+                updateUIAfterLogout();
+            });
+        }
+
+        // ===== SISTEMA DE ACESSIBILIDADE =====
+        function inicializarAcessibilidade() {
+            const menuAcessibilidade = document.getElementById('menu-acessibilidade-sidebar');
+            const botaoAcessibilidade = document.getElementById('botao-acessibilidade');
+            const fecharMenu = document.getElementById('fechar-menu-acessibilidade');
+            const body = document.body;
+            const opcoes = document.querySelectorAll('.acessibilidade-opcao');
+            const guiaLeituraBarra = document.getElementById('guia-leitura-barra');
+            
+            let nivelFonte = 0;
+            let nivelEspaco = 0;
+            let isGuiaLeituraAtivo = false;
+            let isLinhasLeituraAtivo = false;
+
+            botaoAcessibilidade.addEventListener('click', () => {
+                menuAcessibilidade.classList.toggle('acessibilidade-aberto');
+                menuAcessibilidade.classList.toggle('acessibilidade-fechado');
+            });
+
+            fecharMenu.addEventListener('click', () => {
+                menuAcessibilidade.classList.add('acessibilidade-fechado');
+                menuAcessibilidade.classList.remove('acessibilidade-aberto');
+            });
+
+            function resetarAcessibilidade() {
+                body.className = body.className.split(' ').filter(c => 
+                    !c.startsWith('ajuste-fonte-') && 
+                    !c.startsWith('ajuste-espaco-') && 
+                    !c.endsWith('-cores') &&
+                    !c.endsWith('-contraste') &&
+                    !c.endsWith('-opia') &&
+                    !c.endsWith('-cabecalhos') &&
+                    !c.endsWith('-links') &&
+                    !c.endsWith('-cursor') &&
+                    !c.endsWith('-legivel') &&
+                    !c.endsWith('-leitura')
+                ).join(' ');
+                opcoes.forEach(opt => opt.classList.remove('ativo'));
+                
+                nivelFonte = 0;
+                nivelEspaco = 0;
+                isGuiaLeituraAtivo = false;
+                isLinhasLeituraAtivo = false;
+                
+                guiaLeituraBarra.style.top = '-100px';
+                document.querySelectorAll('.em-foco').forEach(el => el.classList.remove('em-foco'));
+            }
+            
+            opcoes.forEach(botao => {
+                botao.addEventListener('click', () => {
+                    const acao = botao.dataset.acao;
+
+                    if (acao === 'reset') {
+                        resetarAcessibilidade();
+                        return;
+                    }
+                    
+                    if (acao === 'aumentar-fonte') {
+                        if (nivelFonte < 3) nivelFonte++;
+                        body.classList.remove(`ajuste-fonte-${nivelFonte - 1}`);
+                        body.classList.add(`ajuste-fonte-${nivelFonte}`);
+                        botao.classList.add('ativo');
+                    } else if (acao === 'diminuir-fonte') {
+                        if (nivelFonte > 0) nivelFonte--;
+                        body.classList.remove(`ajuste-fonte-${nivelFonte + 1}`);
+                        if (nivelFonte > 0) {
+                            body.classList.add(`ajuste-fonte-${nivelFonte}`);
+                            botao.classList.add('ativo');
+                        } else {
+                            botao.classList.remove('ativo');
+                        }
+                    } else if (acao === 'espacamento-texto') {
+                        if (nivelEspaco < 3) {
+                            nivelEspaco++;
+                            body.classList.remove(`ajuste-espaco-${nivelEspaco - 1}`);
+                            body.classList.add(`ajuste-espaco-${nivelEspaco}`);
+                            botao.classList.add('ativo');
+                        } else {
+                            nivelEspaco = 0;
+                            body.classList.remove('ajuste-espaco-3');
+                            botao.classList.remove('ativo');
+                        }
+                    } else if (acao === 'guia-leitura') {
+                        isGuiaLeituraAtivo = !isGuiaLeituraAtivo;
+                        if (isGuiaLeituraAtivo) {
+                            botao.classList.add('ativo');
+                        } else {
+                            botao.classList.remove('ativo');
+                            guiaLeituraBarra.style.top = '-100px';
+                        }
+                    } else if (acao === 'linhas-leitura') {
+                        isLinhasLeituraAtivo = !isLinhasLeituraAtivo;
+                        if (isLinhasLeituraAtivo) {
+                            botao.classList.add('ativo');
+                        } else {
+                            botao.classList.remove('ativo');
+                            document.querySelectorAll('.em-foco').forEach(el => el.classList.remove('em-foco'));
+                        }
+                    } else {
+                        body.classList.toggle(acao);
+                        
+                        const isToggleable = ['alto-contraste-escuro', 'inverter-cores', 'protanopia', 'deuteranopia', 'fonte-legivel', 'destacar-links', 'destacar-cabecalhos', 'guia-leitura', 'linhas-leitura'];
+                        
+                        if (isToggleable.includes(acao)) {
+                            botao.classList.toggle('ativo');
+                        }
+                    }
+                    
+                    if (['protanopia', 'deuteranopia'].includes(acao)) {
+                        ['protanopia', 'deuteranopia'].forEach(mode => {
+                            if (mode !== acao) {
+                                body.classList.remove(mode);
+                                document.querySelector(`[data-acao="${mode}"]`).classList.remove('ativo');
+                            }
+                        });
+                    }
+                });
+            });
+            
+            //guia de leitura
+            document.addEventListener('mousemove', (e) => {
+                if (isGuiaLeituraAtivo) {
+                    guiaLeituraBarra.style.top = `${e.clientY - 20}px`;
+                } else if (!isGuiaLeituraAtivo && guiaLeituraBarra.style.top !== '-100px') {
+                     guiaLeituraBarra.style.top = '-100px';
+                }
+            });
+
+            //linha de leitura
+            const elementosLeitura = 'p, li, h1, h2, h3, h4, h5, h6, a, .cartao, .cartao-curso';
+            document.addEventListener('mouseover', (e) => {
+                if (isLinhasLeituraAtivo) {
+                    const target = e.target.closest(elementosLeitura);
+                    
+                    document.querySelectorAll('.em-foco').forEach(el => el.classList.remove('em-foco'));
+                    
+                    if (target) {
+                        target.classList.add('em-foco');
+                    }
+                }
+            });
+        }
+
+        // ===== CÓDIGO DO JOGO COM PERGUNTAS ATUALIZADAS =====
+        const allQuestions = [
+            // GESTÃO DE PESSOAS (10 perguntas)
+            { question: "O que significa gestão de pessoas?", answers: ["Mandar em todos sem ouvir ninguém", "Orientar, motivar e apoiar a equipe", "Deixar que cada um faça o que quiser"], correct: 1 },
+            { question: "Por que a gestão de pessoas é importante?", answers: ["Para mostrar que o líder sabe mais que todos", "Para evitar dar atenção à equipe", "Para melhorar o desempenho e criar ambiente saudável"], correct: 2 },
+            { question: "Se um membro da equipe tem dificuldade, o que fazer?", answers: ["Ignorar e deixar ele se virar", "Oferecer ajuda, orientação e incentivo", "Repreender na frente de todos"], correct: 1 },
+            { question: "Qual atitude demonstra boa gestão de pessoas?", answers: ["Escutar, orientar e reconhecer esforços", "Cobrar resultados sem ajudar", "Delegar tarefas sem dar suporte"], correct: 0 },
+            { question: "A equipe está desmotivada. O que você faz?", answers: ["Aumenta a pressão sobre todos", "Ouve, apoia e motiva a equipe", "Troca todos os funcionários"], correct: 1 },
+            { question: "O que é feedback na gestão?", answers: ["Apenas críticas negativas", "Retorno sobre desempenho para melhoria", "Um tipo de castigo"], correct: 1 },
+            { question: "Como reconhecer um bom trabalho?", answers: ["Ignorar para não criar inveja", "Elogiar em particular apenas", "Reconhecer publicamente o esforço"], correct: 2 },
+            { question: "O que é clima organizacional?", answers: ["Temperatura do ar condicionado", "Percepção sobre o ambiente de trabalho", "Horário de funcionamento"], correct: 1 },
+            { question: "Qual característica um bom gestor tem?", answers: ["Ser autoritário sempre", "Saber ouvir e se comunicar bem", "Fazer tudo sozinho"], correct: 1 },
+            { question: "Para que serve uma reunião de equipe?", answers: ["Para cumprir tabela", "Para alinhar objetivos e ouvir ideias", "Para dar ordens"], correct: 1 },
+
+            // GESTÃO DE TAREFAS (10 perguntas)
+            { question: "O que significa gerir suas tarefas?", answers: ["Fazer tudo de qualquer jeito", "Planejar, organizar e acompanhar", "Deixar para depois e improvisar"], correct: 1 },
+            { question: "Por que ter uma rotina profissional?", answers: ["Para cumprir prazos e ser produtivo", "Para trabalhar sem pensar", "Para descansar mais"], correct: 0 },
+            { question: "Se tem muitas tarefas, o que fazer?", answers: ["Tentar fazer todas ao mesmo tempo", "Priorizar as mais importantes", "Deixar para o último minuto"], correct: 1 },
+            { question: "O que ajuda na gestão de tarefas?", answers: ["Criar lista e seguir prioridade", "Não anotar nada na memória", "Ignorar tarefas menores"], correct: 0 },
+            { question: "Terminou as tarefas do dia, mas sobra trabalho. O que faz?", answers: ["Deixa para amanhã sem planejar", "Faz de qualquer jeito rápido", "Organiza o que resta e decide prioridade"], correct: 2 },
+            { question: "O que é procrastinação?", answers: ["Trabalhar rapidamente", "Adiar tarefas importantes", "Planejar com antecedência"], correct: 1 },
+            { question: "Qual benefício da organização?", answers: ["Mais estresse", "Menos produtividade", "Economia de tempo e menos erros"], correct: 2 },
+            { question: "Como lidar com prazos curtos?", answers: ["Entrar em pânico", "Priorizar e focar no essencial", "Pedir extensão de todos"], correct: 1 },
+            { question: "O que é produtividade?", answers: ["Trabalhar muitas horas", "Fazer mais com menos recursos", "Fazer tudo rápido sem qualidade"], correct: 1 },
+            { question: "Qual ferramenta ajuda no tempo?", answers: ["Relógio de parede", "Agenda ou aplicativos", "Calculadora"], correct: 1 },
+
+            // PONTUALIDADE E RESPONSABILIDADE (10 perguntas)
+            { question: "O que significa ser pontual?", answers: ["Chegar quando quiser", "Chegar na hora combinada", "Chegar atrasado com justificativa"], correct: 1 },
+            { question: "O que é responsabilidade?", answers: ["Culpar as circunstâncias", "Deixar outros resolverem", "Cumprir tarefas e assumir consequências"], correct: 2 },
+            { question: "Se não consegue cumprir prazo, o que fazer?", answers: ["Ignorar e esperar ninguém notar", "Avisar antecipadamente e tentar resolver", "Culpar outra pessoa"], correct: 1 },
+            { question: "Qual atitude demonstra pontualidade?", answers: ["Chegar atrasado sempre", "Chegar no horário e avisar se atrasar", "Só cumprir com supervisão"], correct: 1 },
+            { question: "Você se comprometeu a ajudar colega. O que faz?", answers: ["Finge que esqueceu", "Começa mas não termina", "Cumpre o combinado e oferece ajuda"], correct: 2 },
+            { question: "O que é assiduidade?", answers: ["Ser amigável", "Frequência e presença regular", "Ser assertivo"], correct: 1 },
+            { question: "Como a falta de responsabilidade é vista?", answers: ["Como algo normal", "Como falta de profissionalismo", "Como criatividade"], correct: 1 },
+            { question: "O que fazer se vai se atrasar?", answers: ["Não fazer nada", "Avisar com antecedência", "Inventar desculpa"], correct: 1 },
+            { question: "Qual consequência de não cumprir prazos?", answers: ["Nenhuma", "Perda de confiança", "Promoção"], correct: 1 },
+            { question: "Como demonstrar pontualidade em reunião?", answers: ["Chegar atrasado sempre", "Chegar alguns minutos antes", "Chegar quando acabar"], correct: 1 },
+
+            // TRABALHO EM EQUIPE (10 perguntas)
+            { question: "Qual atitude mais fortalece equipe?", answers: ["Cada um focar só na sua tarefa", "Evitar dar feedback", "Compartilhar conhecimento e ajudar"], correct: 2 },
+            { question: "O que significa 'objetivo comum'?", answers: ["Cada um tem meta pessoal", "Só líder conhece objetivo", "Todos buscam mesma meta"], correct: 2 },
+            { question: "Qual sinal de confiança na equipe?", answers: ["Ninguém questiona nada", "Pessoas pedem ajuda sem medo", "Ninguém comete erros"], correct: 1 },
+            { question: "Durante discussão, o que é importante?", answers: ["Escutar antes de responder", "Falar mais alto para ouvir", "Defender só sua opinião"], correct: 0 },
+            { question: "Colega tem ideia diferente. O que fazer?", answers: ["Ignorar e continuar com a sua", "Criticar a ideia dele", "Considerar e buscar consenso"], correct: 2 },
+            { question: "Qual vantagem do trabalho em equipe?", answers: ["Menor carga individual", "Soma de habilidades diferentes", "Menor responsabilidade"], correct: 1 },
+            { question: "Como resolver conflitos?", answers: ["Ignorar o problema", "Diálogo e buscar soluções", "Levar para chefe resolver"], correct: 1 },
+            { question: "O que é comunicação assertiva?", answers: ["Gritar para ser ouvido", "Expressar ideias com clareza", "Falar o mínimo possível"], correct: 1 },
+            { question: "O que atrapalha trabalho em equipe?", answers: ["Colaboração", "Egoísmo e falta de comunicação", "Feedback construtivo"], correct: 1 },
+            { question: "Para que serve reunião de alinhamento?", answers: ["Perder tempo", "Garantir que todos na mesma direção", "Conversar sobre assuntos pessoais"], correct: 1 },
+
+            // ENTREVISTAS DE EMPREGO (10 perguntas)
+            { question: "Como se vestir em entrevista?", answers: ["Roupa de festa para impressionar", "Roupa profissional adequada", "Pijama para conforto"], correct: 1 },
+            { question: "O que fazer ANTES da entrevista?", answers: ["Decorar respostas da internet", "Não pesquisar nada", "Pesquisar sobre empresa e vaga"], correct: 2 },
+            { question: "Como falar sobre pontos fracos?", answers: ["Dizer que não tem nenhum", "Mencionar um real e como melhora", "Inventar que é perfeccionista"], correct: 1 },
+            { question: "Por que fazer perguntas ao final?", answers: ["Para prolongar entrevista", "Para testar entrevistador", "Para demonstrar interesse"], correct: 2 },
+            { question: "Se não souber responder pergunta?", answers: ["Inventar resposta", "Ficar em silêncio", "Ser honesto e mostrar vontade de aprender"], correct: 2 },
+            { question: "O que é mais importante em entrevista?", answers: ["Falar sem parar", "Ser pontual e preparado", "Usar muitas gírias"], correct: 1 },
+            { question: "Como se portar durante entrevista?", answers: ["Ficar relaxado demais", "Manter postura profissional", "Falar mal de empregos anteriores"], correct: 1 },
+            { question: "O que levar para entrevista?", answers: ["Nada", "Cópia do currículo", "Presente para entrevistador"], correct: 1 },
+            { question: "Como responder 'conte sobre você'?", answers: ["Falar sobre vida pessoal", "Resumo profissional relevante", "Perguntar o que querem saber"], correct: 1 },
+            { question: "Qual pergunta fazer ao entrevistador?", answers: ["Só sobre salário", "Sobre crescimento na empresa", "Sobre horário de almoço"], correct: 1 },
+
+            // PRIMEIRO EMPREGO (10 perguntas)
+            { question: "O que empresas buscam no primeiro emprego?", answers: ["Muita experiência", "Vontade de aprender", "Currículo com cursos caros"], correct: 1 },
+            { question: "O que incluir no currículo sem experiência?", answers: ["Deixar em branco", "Destacar cursos e habilidades", "Mentir sobre trabalho"], correct: 1 },
+            { question: "Como agir nos primeiros dias?", answers: ["Tentar mudar tudo", "Observar, ouvir e perguntar", "Competir com colegas"], correct: 1 },
+            { question: "Se cometer erro, o que fazer?", answers: ["Esconder o erro", "Assumir e buscar corrigir", "Culpar circunstâncias"], correct: 1 },
+            { question: "Como demonstrar comprometimento?", answers: ["Ficar até tarde sempre", "Ser pontual e organizado", "Sempre concordar com chefe"], correct: 1 },
+            { question: "O que são soft skills?", answers: ["Habilidades técnicas", "Habilidades comportamentais", "Softwares de computador"], correct: 1 },
+            { question: "Importância do networking?", answers: ["Nenhuma", "Construir relações profissionais", "Fazer só amigos"], correct: 1 },
+            { question: "Como administrar primeiro salário?", answers: ["Gastar tudo", "Fazer planejamento", "Emprestar para colegas"], correct: 1 },
+            { question: "O que é ética profissional?", answers: ["Ganhar muito dinheiro", "Agir com honestidade", "Seguir regras cegamente"], correct: 1 },
+            { question: "Como pedir ajuda no trabalho?", answers: ["Não pedir nunca", "Perguntar de forma educada", "Pedir para outros fazerem"], correct: 1 }
+        ];
+
+        let questions = [];
+
+        let currentQuestionIndex = 0; 
+        let lives = 3;
+        let walkingInterval;
+        let isBackwards = false; 
+
+        const gameScreen = document.getElementById("game-screen");
+        const focusOverlay = document.getElementById("focus-overlay");
+        const flashOverlay = document.getElementById("flash-overlay");
+        const startOverlay = document.getElementById("start-overlay");
+        const nextBtn = document.getElementById("next-question-btn");
+        const hud = document.getElementById("hud");
+        const questionCounter = document.getElementById("question-counter");
+        const character = document.getElementById("character");
+        const questionMark = document.getElementById("question-mark");
+        const questionBox = document.getElementById("question-box");
+        const answersContainer = document.getElementById("answers-container");
+        const bubbles = document.querySelectorAll(".answer-bubble");
+        const hearts = [document.getElementById("heart3"), document.getElementById("heart2"), document.getElementById("heart1")];
+        const endScreen = document.getElementById("end-screen");
+        const endMessage = document.getElementById("end-message");
+        const historyModal = document.getElementById("history-modal");
+        const historyList = document.getElementById("history-list");
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+
+        function startWalkingAnimation() {
+            if(walkingInterval) clearInterval(walkingInterval);
+            let toggle = false;
+            walkingInterval = setInterval(() => {
+                if(isBackwards) {
+                    character.style.backgroundImage = toggle ? "url('img-jogo/anima5.png')" : "url('img-jogo/anima6.png')";
+                } else {
+                    character.style.backgroundImage = toggle ? "url('img-jogo/anima1.png')" : "url('img-jogo/anima2.png')";
+                }
+                toggle = !toggle;
+            }, 100);
+        }
+
+
+        function startGame() {
+            questions = shuffleArray([...allQuestions]).slice(0, 10);
+
+            startOverlay.style.display = 'none';
+            hud.style.display = 'flex';
+            character.style.display = 'block';
+            
+            gameScreen.classList.remove('scrolling-bg');
+            gameScreen.style.backgroundPosition = "0px center";
+            character.style.backgroundImage = "url('img-jogo/perso.png')";
+            
+            prepareNextLevel();
+        }
+
+        function startTravelSequence() {
+            questionBox.style.display = 'none';
+            answersContainer.style.display = 'none';
+            focusOverlay.classList.remove('active');
+            questionMark.classList.remove('spinning');
+
+            isBackwards = false; 
+            startWalkingAnimation();
+            
+            const screenWidth = gameScreen.offsetWidth;
+            const newPosition = -(currentQuestionIndex * screenWidth);
+            gameScreen.style.backgroundPosition = `${newPosition}px center`;
+
+            setTimeout(() => {
+                stopTravelSequence();
+                prepareNextLevel();
+            }, 5000); 
+        }
+
+        function stopTravelSequence() {
+            clearInterval(walkingInterval);
+            character.style.backgroundImage = "url('img-jogo/perso.png')";
+        }
+
+        function prepareNextLevel() {
+            if (currentQuestionIndex >= questions.length) {
+                showEndScreen(true);
+                return;
+            }
+            nextBtn.style.display = 'block';
+        }
+
+        function showQuestionPhase() {
+            nextBtn.style.display = 'none';
+            focusOverlay.classList.add('active');
+            
+            clearInterval(walkingInterval);
+            character.style.backgroundImage = "url('img-jogo/pose.png')";
+            questionMark.classList.add('spinning');
+
+            loadQuestionData();
+            questionBox.style.display = 'block';
+            answersContainer.style.display = 'flex';
+        }
+
+        function loadQuestionData() {
+            const currentQ = questions[currentQuestionIndex];
+            questionCounter.textContent = `Q: ${currentQuestionIndex + 1}/${questions.length}`;
+            questionBox.textContent = currentQ.question;
+            bubbles.forEach((bubble, index) => {
+                bubble.textContent = currentQ.answers[index];
+            });
+        }
+
+        function checkAnswer(selectedIndex) {
+            const currentQ = questions[currentQuestionIndex];
+            
+            questionBox.style.display = 'none';
+            answersContainer.style.display = 'none';
+
+            if (selectedIndex === currentQ.correct) {
+                triggerFlash('green', () => {
+                    currentQuestionIndex++;
+                    startTravelSequence();
+                });
+            } else {
+                triggerFlash('red', () => {
+                    loseLife();
+                });
+            }
+        }
+
+        function triggerFlash(color, callback) {
+            const className = color === 'red' ? 'flash-red' : 'flash-green';
+            flashOverlay.classList.add(className);
+
+            setTimeout(() => {
+                flashOverlay.classList.remove(className);
+                if (callback) callback();
+            }, 1000); 
+        }
+
+        function loseLife() {
+            lives--;
+            if (lives >= 0) {
+                hearts[lives].style.visibility = 'hidden';
+                if(lives > 0) {
+                    questionBox.style.display = 'block';
+                    answersContainer.style.display = 'flex';
+                }
+            }
+            if (lives === 0) {
+                showEndScreen(false);
+            }
+        }
+
+        function saveHistory(win) {
+            const history = JSON.parse(localStorage.getItem('rpgHistory')) || [];
+            
+            const newEntry = {
+                date: new Date().toLocaleString(),
+                score: `${currentQuestionIndex}/${questions.length}`,
+                result: win ? "Vitória" : "Derrota"
+            };
+            history.unshift(newEntry);
+            if(history.length > 10) history.pop(); 
+            localStorage.setItem('rpgHistory', JSON.stringify(history));
+        }
+
+        function toggleHistory() {
+            if (historyModal.style.display === 'block') {
+                historyModal.style.display = 'none';
+            } else {
+                loadHistoryUI();
+                historyModal.style.display = 'block';
+            }
+        }
+
+        function loadHistoryUI() {
+            const history = JSON.parse(localStorage.getItem('rpgHistory')) || [];
+            historyList.innerHTML = "";
+            if (history.length === 0) {
+                historyList.innerHTML = "<li>Sem histórico ainda.</li>";
+                return;
+            }
+            history.forEach(item => {
+                const li = document.createElement("li");
+                li.className = "history-item";
+                li.innerHTML = `<span>${item.date}</span> <span>${item.result} (${item.score})</span>`;
+                historyList.appendChild(li);
+            });
+        }
+
+        function clearHistory() {
+            localStorage.removeItem('rpgHistory');
+            loadHistoryUI();
+        }
+
+        function showEndScreen(isWin) {
+            saveHistory(isWin); 
+            
+            endScreen.style.display = "flex";
+            questionBox.style.display = 'none';
+            answersContainer.style.display = 'none';
+            nextBtn.style.display = 'none';
+            character.style.display = 'none';
+            questionMark.classList.remove('spinning'); 
+            clearInterval(walkingInterval); 
+            
+            if (isWin) {
+                endMessage.textContent = "PARABÉNS! VOCÊ ESTÁ PREPARADO PARA O MERCADO!";
+                endMessage.style.color = "#2ecc71";
+            } else {
+                endMessage.textContent = "CONTINUE TREINANDO! VOCÊ VAI CONSEGUIR!";
+                endMessage.style.color = "#e74c3c";
+            }
+        }
+
+        function goToMenu() {
+            endScreen.style.display = "none";
+            startOverlay.style.display = "flex";
+            hud.style.display = "none";
+            
+            gameScreen.classList.add('scrolling-bg'); 
+            gameScreen.style.backgroundPosition = "0 center";
+            
+            character.style.display = "none"; 
+            
+            currentQuestionIndex = 0;
+            lives = 3;
+            hearts.forEach(h => h.style.visibility = 'visible');
+            isBackwards = false;
+        }
+
+        function restartGame() {
+            endScreen.style.display = "none";
+            character.style.display = 'block';
+            
+            isBackwards = true;
+            startWalkingAnimation(); 
+
+            gameScreen.style.transition = "background-position 4s linear"; 
+            gameScreen.style.backgroundPosition = "0px center";
+
+            setTimeout(() => {
+                clearInterval(walkingInterval);
+                isBackwards = false;
+                
+                currentQuestionIndex = 0;
+                lives = 3;
+                hearts.forEach(h => h.style.visibility = 'visible');
+                
+                questions = shuffleArray([...allQuestions]).slice(0, 10);
+
+                gameScreen.style.transition = "background-position 5s linear";
+                
+                hud.style.display = 'flex';
+                questionMark.classList.remove('spinning');
+                character.style.backgroundImage = "url('img-jogo/perso.png')";
+                
+                prepareNextLevel();
+
+            }, 4000); 
+        }
+
+        function speakText(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'pt-BR'; 
+                utterance.rate = 1.2; 
+                utterance.pitch = 1;  
+
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function stopSpeaking() {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+        }
+
+        function addAudioToElement(elementId) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.addEventListener('mouseenter', () => speakText(element.innerText));
+                element.addEventListener('mouseleave', stopSpeaking);
+            }
+        }
+
+        // Inicializar áudio nos elementos
+        addAudioToElement('start-button');
+        addAudioToElement('history-btn');
+        addAudioToElement('next-question-btn');
+        
+        const qBox = document.getElementById('question-box');
+        qBox.addEventListener('mouseenter', () => speakText("Pergunta: " + qBox.innerText));
+        qBox.addEventListener('mouseleave', stopSpeaking);
+
+        const answerBubbles = document.querySelectorAll('.answer-bubble');
+        answerBubbles.forEach((bubble) => {
+            bubble.addEventListener('mouseenter', () => {
+                speakText("Opção: " + bubble.innerText);
+            });
+            bubble.addEventListener('mouseleave', stopSpeaking);
+        });
+
+        const endButtons = document.querySelectorAll('.game-button');
+        endButtons.forEach((btn) => {
+            btn.addEventListener('mouseenter', () => speakText(btn.innerText));
+            btn.addEventListener('mouseleave', stopSpeaking);
+        });
+    </script>
+</body>
+</html>

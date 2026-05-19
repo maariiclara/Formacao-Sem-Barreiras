@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Criar Estrutura Firebase</title>
+</head>
+<body>
+    <h1>Criar Estrutura Inicial do Firebase</h1>
+    <button onclick="criarEstrutura()">Criar Estrutura Inicial</button>
+    <div id="mensagem" style="margin-top: 20px;"></div>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAcfMe_zFeS7mGJA1UhA65goiP1gOh-vlI",
+            authDomain: "teste-esse-06-12.firebaseapp.com",
+            projectId: "teste-esse-06-12",
+            storageBucket: "teste-esse-06-12.firebasestorage.app",
+            messagingSenderId: "988541369532",
+            appId: "1:988541369532:web:f5ab3bae7bc0279b1064b9",
+            measurementId: "G-Q2WVXT54TX"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        
+        async function criarEstrutura() {
+            const mensagem = document.getElementById('mensagem');
+            mensagem.innerHTML = '<p>Criando estrutura...</p>';
+            
+            try {
+                // Criar contador de usuários
+                await db.collection('countUsers').doc('contador').set({
+                    totalUsers: 0,
+                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                mensagem.innerHTML = `
+                    <div style="background: #e8f5e8; padding: 15px; border-radius: 5px; color: #155724;">
+                        <h3>✅ Estrutura criada com sucesso!</h3>
+                        <p>Agora você tem as seguintes coleções:</p>
+                        <ul>
+                            <li><strong>countUsers/contador</strong> - Contador de usuários</li>
+                            <li><strong>users</strong> - Coleção de usuários (será criada automaticamente)</li>
+                            <li><strong>resultadoSimulacao</strong> - Resultados de simulações</li>
+                            <li><strong>resultadoCurso</strong> - Resultados de cursos</li>
+                            <li><strong>simuladosAndamento</strong> - Simulados em andamento</li>
+                            <li><strong>simuladosAndamentoGestaoPessoas</strong> - Progresso do curso</li>
+                        </ul>
+                        <p>Agora você pode usar o sistema normalmente!</p>
+                    </div>
+                `;
+                
+            } catch (error) {
+                mensagem.innerHTML = `
+                    <div style="background: #fde8e8; padding: 15px; border-radius: 5px; color: #721c24;">
+                        <h3>❌ Erro ao criar estrutura</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
